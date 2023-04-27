@@ -8,7 +8,7 @@ enum TokenType {
     RIGHT_BRACE, // right brace
     COMMA, // comma
     DOT, // dot
-    MINUX, // minux
+    MINUS, // minus
     PLUS, // plus
     SEMICOLON, // semicolon
     SLASH, // slash
