@@ -1,7 +1,5 @@
 package com.zlox.lox;
 
-import java.util.List;
-
 abstract class Expr {
 	interface Visitor<R> {
 		R visitBinaryExpr(Binary expr);
@@ -71,7 +69,6 @@ abstract class Expr {
 		final Token operator;
 		final Expr right;
 	}
-
 
 	abstract <R> R accept(Visitor<R> visitor);
 }
