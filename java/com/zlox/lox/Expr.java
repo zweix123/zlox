@@ -1,6 +1,6 @@
 package com.zlox.lox;
 
-abstract class Expr {
+public abstract class Expr {
 	interface Visitor<R> {
 		R visitBinaryExpr(Binary expr);
 
@@ -9,7 +9,6 @@ abstract class Expr {
 		R visitLiteralExpr(Literal expr);
 
 		R visitUnaryExpr(Unary expr);
-
 	}
 
 	static class Binary extends Expr {

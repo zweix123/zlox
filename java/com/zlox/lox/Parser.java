@@ -1,7 +1,6 @@
 package com.zlox.lox;
 
 import java.util.List;
-import java.util.spi.CurrencyNameProvider;
 
 import static com.zlox.lox.TokenType.*;
 

@@ -11,6 +11,8 @@ import java.util.List;
 
 public class Lox {
     static boolean hadError = false;
+    private static final Interpreter interpreter = new Interpreter();
+    static boolean hadRuntimeError = false;
 
     public static void main(String[] args) {
         try {
@@ -34,6 +36,8 @@ public class Lox {
 
         if (hadError)
             System.exit(65);
+        if (hadRuntimeError) // 这部分在Prompt并不需要，继续输入就可
+            System.exit(70);
     }
 
     private static void runPrompt() throws IOException {
@@ -59,14 +63,18 @@ public class Lox {
         // System.out.println(token);
         // }
 
-        // 测试句法分析器
         Parser parser = new Parser(tokens);
         Expr expression = parser.parse();
 
         // Stop if there was a syntax error.
         if (hadError)
             return;
-        System.out.println(new AstPrinter().print(expression));
+
+        // 测试句法分析器
+        // System.out.println(new AstPrinter().print(expression));
+
+        
+        interpreter.interpret(expression);
     }
 
     static void error(int line, String message) {
@@ -86,4 +94,8 @@ public class Lox {
         }
     }
 
+    static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
+        hadRuntimeError = true;
+    }
 }
