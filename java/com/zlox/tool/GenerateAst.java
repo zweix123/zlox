@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
-
 import java.nio.file.Paths;
 
 public class GenerateAst {
@@ -34,8 +33,8 @@ public class GenerateAst {
 
             writer.println("package com.zlox.lox;");
             writer.println();
-            writer.println("import java.util.List;");
-            writer.println();
+            // writer.println("import java.util.List;");
+            // writer.println();
             writer.println("abstract class" + " " + baseName + " " + "{");
             defineVisitor(writer, baseName, types);
             writer.println();
@@ -47,7 +46,6 @@ public class GenerateAst {
                 writer.println();
             }
 
-            writer.println();
             writer.println("\t" + "abstract <R> R accept(Visitor<R> visitor);");
 
             writer.println("}");

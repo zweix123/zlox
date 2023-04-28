@@ -93,3 +93,22 @@ printStmt      → "print" expression ";" ;
 >至少现在终于把program作为语法起点
 
 在这里主要是AST的顶点变化了，我们新增一个数据类`Stmt`（`Stmt.java`）,相应的在解析器和解释器中对应的变化。
+
+添加声明语句
+```
+program        → declaration* EOF ;
+
+declaration    → varDecl
+               | statement ;
+
+statement      → exprStmt
+               | printStmt ;
+// 关于var的语法
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+// 定义一个新类型的基本表达式
+primary        → "true" | "false" | "nil"
+               | NUMBER | STRING
+               | "(" expression ")"
+               | IDENTIFIER ;
+```
+我们发现声明语句怎么有一个更高的优先级？因为要考虑这样的情况，就是一个if或者while的块只有一句声明语句，那么这里声明的变量在其他的块是否存在？这太怪了，所以在不同位置的声明语句需要区别对待
