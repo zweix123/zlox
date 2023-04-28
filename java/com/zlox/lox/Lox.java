@@ -7,12 +7,11 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-// import java.util.Scanner;
 
 public class Lox {
-    static boolean hadError = false;
+    static boolean hadError = false; // scanner遇到错误
     private static final Interpreter interpreter = new Interpreter();
-    static boolean hadRuntimeError = false;
+    static boolean hadRuntimeError = false; // parser遇到错误
 
     public static void main(String[] args) {
         try {
@@ -25,9 +24,8 @@ public class Lox {
                 runPrompt();
             }
         } catch (IOException e) {
-            System.out.println("发生异常：" + e.getMessage());
+            System.out.println("发生异常: " + e.getMessage());
         }
-
     }
 
     private static void runFile(String path) throws IOException {
@@ -36,7 +34,7 @@ public class Lox {
 
         if (hadError)
             System.exit(65);
-        if (hadRuntimeError) // 这部分在Prompt并不需要，继续输入就可
+        if (hadRuntimeError)
             System.exit(70);
     }
 
@@ -44,8 +42,9 @@ public class Lox {
         InputStreamReader input = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(input);
 
+        String prompt = "> ";
         for (;;) {
-            System.out.print("> ");
+            System.out.print(prompt);
             String line = reader.readLine();
             if (line == null)
                 break;
@@ -66,18 +65,11 @@ public class Lox {
         Parser parser = new Parser(tokens);
         List<Stmt> statements = parser.parse();
 
-        // Stop if there was a syntax error.
+        // // Stop if there was a syntax error.
         if (hadError)
             return;
 
-        // 测试句法分析器
-        // System.out.println(new AstPrinter().print(expression));
-
         interpreter.interpret(statements);
-    }
-
-    static void error(int line, String message) {
-        report(line, "", message);
     }
 
     private static void report(int line, String where, String message) {
@@ -85,7 +77,11 @@ public class Lox {
         hadError = true;
     }
 
-    static void error(Token token, String message) {
+    static void error(int line, String message) { // 词法分析错误
+        report(line, "", message);
+    }
+
+    static void error(Token token, String message) { // 句法分析错误
         if (token.type == TokenType.EOF) {
             report(token.line, " at end", message);
         } else {
@@ -93,7 +89,7 @@ public class Lox {
         }
     }
 
-    static void runtimeError(RuntimeError error) {
+    static void runtimeError(RuntimeError error) { //
         System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
         hadRuntimeError = true;
     }

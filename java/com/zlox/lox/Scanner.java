@@ -11,7 +11,7 @@ class Scanner {
     private final String source;
     private final List<Token> tokens = new ArrayList<>();
     private int start = 0; // 指向被扫描的词素中的第一个字符
-    private int current = 0; // 指向当前正在处理的字符
+    private int current = 0; // 指向当前正在处理的字符的下一个位置
     private int line = 1; // current所在的源文件行数
     private static final Map<String, TokenType> keywords;
 
@@ -41,7 +41,7 @@ class Scanner {
 
     List<Token> scanTokens() {
         while (!isAtEnd()) {
-            start = current;
+            start = current; // 双指针, 一个token一个token的跳
             scanToken();
         }
 
@@ -52,7 +52,7 @@ class Scanner {
     private void scanToken() {
         char c = advance();
         switch (c) {
-            // 单字符
+            // 普通的单字符
             // @formatter:off
             case '(': addToken(LEFT_PAREN); break;
             case ')': addToken(RIGHT_PAREN); break;
@@ -82,12 +82,12 @@ class Scanner {
             case '/': // /, 除号 and //, 注释
                 if (match('/')) { // 之后是注释，吞掉当前行所有
                     while (peek() != '\n' && !isAtEnd())
+                        // 注意`\n`没有在这里被处理
                         advance();
                 } else {
                     addToken(SLASH);
                 }
                 break;
-
             // Ignore whitespace, 注意换行有副作用
             case ' ':
             case '\r':
@@ -97,20 +97,15 @@ class Scanner {
                     line++;
                 break;
 
-            // 下面是数据类型常量, 其中数字只有数字才在最开始就是数字, 所以放到default, 而其他的可以作为关键字处理
             case '"':
                 string();
                 break;
 
-            /*
-             * Reserved words and Identifiers的处理需要考虑最长匹配
-             * 因为用户定义的名称可能和关键字有相同的前缀，不能通过lookahead的方法
-             */
-
-            default:
-                if (isDigit(c)) { // 和语言设计有关，上面的标记已经遍历所有的可能了
+            default: // 数字和标识符的前缀都是多元的, 放在default
+                if (isDigit(c)) {
                     number();
                 } else if (isAlpha(c)) {
+                    // 这里同时处理和保留字和标识符, 因为它们可能有共同的前缀
                     identifier();
                 } else {
                     Lox.error(line, "Unexpected character.");
@@ -145,7 +140,7 @@ class Scanner {
 
     private void string() {
         while (peek() != '"' && !isAtEnd()) {
-            if (peek() == '\n')
+            if (peek() == '\n') // 我们的语言的字符串可以跨行
                 line++; // 艰苦朴素不能忘
             advance();
         }
@@ -158,10 +153,9 @@ class Scanner {
 
         String value = source.substring(start + 1, current - 1);
         addToken(STRING, value);
-
     }
 
-    // 下面两个辅助函数 match 和 peek，在整体上的区别是，match会导致指针的移动，而peek则只是lookahead
+    // lookahead, 有副作用
     private boolean match(char expected) {
         if (isAtEnd())
             return false;
@@ -171,12 +165,14 @@ class Scanner {
         return true;
     }
 
+    // lookahead, 无副作用
     private char peek() {
         if (isAtEnd())
             return '\0';
         return source.charAt(current);
     }
 
+    // lookahead, 无副作用
     private char peekNext() {
         if (current + 1 >= source.length())
             return '\0';
@@ -200,7 +196,7 @@ class Scanner {
     }
 
     private char advance() {
-        current++; // 我们看，current是超尾的位置
+        current++; // current是超尾
         return source.charAt(current - 1);
     }
 
@@ -212,5 +208,4 @@ class Scanner {
         String text = source.substring(start, current);
         tokens.add(new Token(type, text, literal, line));
     }
-
 }

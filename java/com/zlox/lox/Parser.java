@@ -25,11 +25,6 @@ class Parser {
         return statements;
     }
 
-    private Expr expression() {
-        return assignment();
-        // return equality();
-    }
-
     private Stmt declaration() {
         try {
             if (match(VAR))
@@ -39,6 +34,18 @@ class Parser {
             synchronize();
             return null;
         }
+    }
+
+    private Stmt varDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect variable name.");
+
+        Expr initializer = null;
+        if (match(EQUAL)) {
+            initializer = expression();
+        }
+
+        consume(SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
     }
 
     private Stmt statement() {
@@ -54,25 +61,21 @@ class Parser {
         return new Stmt.Print(value);
     }
 
-    private Stmt varDeclaration() {
-        Token name = consume(IDENTIFIER, "Expect variable name.");
-
-        Expr initializer = null;
-        if (match(EQUAL)) {
-            initializer = expression();
-        }
-
-        consume(SEMICOLON, "Expect ';' after variable declaration.");
-        return new Stmt.Var(name, initializer);
-    }
-
     private Stmt expressionStatement() {
         Expr expr = expression();
         consume(SEMICOLON, "Expect ';' after expression.");
         return new Stmt.Expression(expr);
     }
 
+    private Expr expression() {
+        return assignment();
+        // return equality();
+    }
+
     private Expr assignment() {
+        // 该名称并没有在语法中出现
+        // 是`expression → equality ;`的trick
+        // 因为赋值语句是可以嵌套的，每个右值表达式中都可能有个左值，所以这里有个自调用递归
         Expr expr = equality();
 
         if (match(EQUAL)) {
@@ -146,19 +149,16 @@ class Parser {
         }
 
         return primary();
-
     }
 
     private Expr primary() {
         // @formatter:off
-        if (match(FALSE)) return new Expr.Literal(false);
         if (match(TRUE)) return new Expr.Literal(true);
+        if (match(FALSE)) return new Expr.Literal(false);
         if (match(NIL)) return new Expr.Literal(null);
         if (match(NUMBER, STRING)) return new Expr.Literal(previous().literal);
+        if (match(IDENTIFIER)) return new Expr.Variable(previous());
         // @formatter:on
-        if (match(IDENTIFIER)) {
-            return new Expr.Variable(previous());
-        }
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expect ')' after expression.");
@@ -174,6 +174,7 @@ class Parser {
         throw error(peek(), message);
     }
 
+    // 有副作用
     private boolean match(TokenType... types) {
         for (TokenType type : types) {
             if (check(type)) {
@@ -230,6 +231,7 @@ class Parser {
                 case PRINT:
                 case RETURN:
                     return;
+                default:
             }
 
             advance();

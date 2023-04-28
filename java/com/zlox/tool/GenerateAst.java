@@ -51,7 +51,7 @@ public class GenerateAst {
 
             writer.println("\t" + "abstract <R> R accept(Visitor<R> visitor);");
 
-            writer.println("}");
+            writer.print("}");
         } catch (IOException e) {
             throw e;
         } finally {
