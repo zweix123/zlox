@@ -1,13 +1,24 @@
 package com.zlox.lox;
 
-public class Interpreter implements Expr.Visitor<Object> {
-    void interpret(Expr expression) {
+import java.util.List;
+
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
+    }
+
+    public Object evaluate(Expr expr) {
+        return expr.accept(this);
+    }
+
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
     }
 
     private String stringify(Object object) {
@@ -23,6 +34,12 @@ public class Interpreter implements Expr.Visitor<Object> {
         }
 
         return object.toString();
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
     }
 
     @Override
@@ -93,10 +110,6 @@ public class Interpreter implements Expr.Visitor<Object> {
         return evaluate(expr.expression);
     }
 
-    public Object evaluate(Expr expr) {
-        return expr.accept(this);
-    }
-
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
@@ -132,4 +145,12 @@ public class Interpreter implements Expr.Visitor<Object> {
             return;
         throw new RuntimeError(operator, "Operand must be a number.");
     }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+
 }
