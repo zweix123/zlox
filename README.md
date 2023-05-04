@@ -34,20 +34,30 @@ Lox语言的zweix实现
 
 ```
 program        → declaration* EOF ;
-declaration    → varDecl
+declaration    → funDecl
+               | varDecl
                | statement ;
+
+funDecl        → "fun" function ;
+function       → IDENTIFIER "(" parameters? ")" block ;
+parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
 statement      → exprStmt
                | forStmt
                | ifStmt
                | printStmt
+               | returnStmt
                | whileStmt
                | block ;
+
 exprStmt       → expression ";" ;
 forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
 ifStmt         → "if" "(" expression ")" statement
                ( "else" statement )? ;
 printStmt      → "print" expression ";" ;
+returnStmt     → "return" expression? ";" ;
 whileStmt      → "while" "(" expression ")" statement ;
 block          → "{" declaration* "}" ;
 expression     → assignment ;
@@ -59,12 +69,13 @@ equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" ) unary )* ;
-unary          → ( "!" | "-" ) unary
-               | primary ;
+unary          → ( "!" | "-" ) unary | call ;
+call           → primary ( "(" arguments? ")" )* ;
 primary        → "true" | "false" | "nil"
                | NUMBER | STRING
                | "(" expression ")"
                | IDENTIFIER ;
+arguments      → expression ( "," expression )* ;
 ```
 
 + `for`语句，并没有和其他的语句类似的实现，因为它使用了desugaring技术，将其转换成while语句来让后端更简单
