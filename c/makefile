@@ -1,6 +1,6 @@
 C = gcc
 
-C_FILE = main.c memory.c value.c chunk.c debug.c
+C_FILE = main.c memory.c value.c chunk.c debug.c vm.c
 
 .PHONY: all
 all: main.out
