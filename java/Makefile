@@ -13,6 +13,8 @@ JLINE = jline.jar
 # CP = $(LIB)$(JLINE):./
 CP = ./
 
+arg = ""
+
 .PHONY: all
 all:
 	echo "占位"
@@ -30,7 +32,7 @@ run: $(LIB)
 # javac
 	$(JAVAC) -cp $(CP) $(MAIN_CODE)
 # java
-	$(JAVA) -cp $(CP) $(MAIN_CLASS)
+	$(JAVA) -cp $(CP) $(MAIN_CLASS) $(arg)
 
 	$(MAKE) clean
 
