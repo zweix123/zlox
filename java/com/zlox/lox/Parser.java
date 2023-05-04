@@ -101,10 +101,7 @@ class Parser {
     }
 
     private Expr assignment() {
-        // 该名称并没有在语法中出现
-        // 是`expression → equality ;`的trick
-        // 因为赋值语句是可以嵌套的，每个右值表达式中都可能有个左值，所以这里有个自调用递归
-        Expr expr = equality();
+        Expr expr = or();
 
         if (match(EQUAL)) {
             Token equals = previous();
@@ -116,6 +113,30 @@ class Parser {
             }
 
             error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
+    }
+
+    private Expr or() {
+        Expr expr = and();
+
+        while (match(OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr and() {
+        Expr expr = equality();
+
+        while (match(AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
         }
 
         return expr;
