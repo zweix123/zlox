@@ -35,14 +35,17 @@ Lox语言的zweix实现
 ```
 program        → declaration* EOF ;
 declaration    → varDecl
-               | statement
-               | block ;
+               | statement ;
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 statement      → exprStmt
+               | ifStmt
                | printStmt ;
-block          → "{" declaration* "}" ;
+               | block ;
 exprStmt       → expression ";" ;
+ifStmt         → "if" "(" expression ")" statement
+               ( "else" statement )? ;
 printStmt      → "print" expression ";" ;
+block          → "{" declaration* "}" ;
 expression     → equality ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
