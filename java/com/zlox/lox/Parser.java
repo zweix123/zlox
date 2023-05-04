@@ -1,8 +1,8 @@
 package com.zlox.lox;
 
-import java.util.List;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.zlox.lox.TokenType.*;
 
@@ -28,8 +28,10 @@ class Parser {
 
     private Stmt declaration() {
         try {
+            if (match(CLASS))
+                return classDeclaration();
             if (match(FUN))
-                return function("function");
+                return functionDeclaration("function");
             if (match(VAR))
                 return varDeclaration();
             return statement();
@@ -39,7 +41,28 @@ class Parser {
         }
     }
 
-    private Stmt.Function function(String kind) {
+    private Stmt classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect class name.");
+
+        Expr.Variable superclass = null;
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expect superclass name.");
+            superclass = new Expr.Variable(previous());
+        }
+
+        consume(LEFT_BRACE, "Expect '{' before class body.");
+
+        List<Stmt.Function> methods = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(functionDeclaration("method"));
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new Stmt.Class(name, superclass, methods);
+    }
+
+    private Stmt.Function functionDeclaration(String kind) {
         Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
         consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
         List<Token> parameters = new ArrayList<>();
@@ -48,7 +71,6 @@ class Parser {
                 if (parameters.size() >= 255) {
                     error(peek(), "Can't have more than 255 parameters.");
                 }
-
                 parameters.add(consume(IDENTIFIER, "Expect parameter name."));
             } while (match(COMMA));
         }
@@ -71,8 +93,6 @@ class Parser {
     }
 
     private Stmt statement() {
-        if (match(CLASS))
-            return classDeclaration();
         if (match(FOR))
             return forStatement();
         if (match(IF))
@@ -86,27 +106,6 @@ class Parser {
         if (match(LEFT_BRACE))
             return new Stmt.Block(block());
         return expressionStatement();
-    }
-
-    private Stmt classDeclaration() {
-        Token name = consume(IDENTIFIER, "Expect class name.");
-
-        Expr.Variable superclass = null;
-        if (match(LESS)) {
-            consume(IDENTIFIER, "Expect superclass name.");
-            superclass = new Expr.Variable(previous());
-        }
-
-        consume(LEFT_BRACE, "Expect '{' before class body.");
-
-        List<Stmt.Function> methods = new ArrayList<>();
-        while (!check(RIGHT_BRACE) && !isAtEnd()) {
-            methods.add(function("method"));
-        }
-
-        consume(RIGHT_BRACE, "Expect '}' after class body.");
-
-        return new Stmt.Class(name, superclass, methods);
     }
 
     private Stmt forStatement() {
@@ -141,6 +140,7 @@ class Parser {
 
         if (condition == null)
             condition = new Expr.Literal(true);
+
         body = new Stmt.While(condition, body);
 
         if (initializer != null) {
@@ -369,6 +369,7 @@ class Parser {
         throw error(peek(), "Expect expression.");
     }
 
+    // lookahhead, 有副作用
     private Token consume(TokenType type, String message) {
         if (check(type))
             return advance();
@@ -376,7 +377,7 @@ class Parser {
         throw error(peek(), message);
     }
 
-    // 有副作用
+    // lookahhead, 有副作用
     private boolean match(TokenType... types) {
         for (TokenType type : types) {
             if (check(type)) {
@@ -387,13 +388,23 @@ class Parser {
         return false;
     }
 
+    // lookahead, 无副作用
     private boolean check(TokenType type) {
         if (isAtEnd())
             return false;
         return peek().type == type;
     }
 
+    private Token peek() { // current上的, 因为current是超尾, 所以是lookahead
+        return tokens.get(current);
+    }
+
+    private Token previous() { // current的前一个
+        return tokens.get(current - 1);
+    }
+
     private Token advance() {
+        // current是超尾
         if (!isAtEnd())
             current++;
         return previous();
@@ -401,14 +412,6 @@ class Parser {
 
     private boolean isAtEnd() {
         return peek().type == EOF;
-    }
-
-    private Token peek() {
-        return tokens.get(current);
-    }
-
-    private Token previous() {
-        return tokens.get(current - 1);
     }
 
     private ParserError error(Token token, String message) {

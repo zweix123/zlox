@@ -1,22 +1,25 @@
 package com.zlox.lox;
 
-import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
 public class Lox {
-    static boolean hadError = false; // scanner遇到错误
     private static final Interpreter interpreter = new Interpreter();
-    static boolean hadRuntimeError = false; // parser遇到错误
+    static boolean hadStaticError = false;
+    static boolean hadRuntimeError = false;
 
     public static void main(String[] args) {
         try {
             if (args.length > 1) {
-                System.out.println("Usage: jlox [script]");
+                System.out.println("Usage: 直接运行进入命令行模式或者提供一个文件路径作为参数解释代码");
                 System.exit(64);
             } else if (args.length == 1) {
                 runFile(args[0]);
@@ -29,51 +32,52 @@ public class Lox {
     }
 
     private static void runFile(String path) throws IOException {
+        File file = new File(path);
+
+        if (!file.exists()) {
+            System.err.println("Error: file does not exist");
+            System.exit(1);
+        }
+
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
 
-        if (hadError)
+        if (hadStaticError)
             System.exit(65);
         if (hadRuntimeError)
             System.exit(70);
     }
 
     private static void runPrompt() throws IOException {
-        InputStreamReader input = new InputStreamReader(System.in);
-        BufferedReader reader = new BufferedReader(input);
+        Terminal terminal = TerminalBuilder.terminal();
+        LineReader reader = LineReaderBuilder.builder().terminal(terminal).build();
 
         String prompt = "> ";
         for (;;) {
-            System.out.print(prompt);
-            String line = reader.readLine();
+            String line = reader.readLine(prompt);
             if (line == null)
                 break;
             run(line);
-            hadError = false;
+            hadStaticError = false;
         }
     }
 
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
-        List<Token> tokens = scanner.scanTokens();
-
-        // 测试词法分析器
-        // for (Token token : tokens) {
-        // System.out.println(token);
-        // }
+        List<Token> tokens = scanner.scanTokens(); // token列表
 
         Parser parser = new Parser(tokens);
-        List<Stmt> statements = parser.parse();
+        List<Stmt> statements = parser.parse(); // 抽象语法树的根节点(列表)
 
         // // Stop if there was a syntax error.
-        if (hadError)
+        if (hadStaticError)
             return;
 
         Resolver resolver = new Resolver(interpreter);
         resolver.resolve(statements);
 
         // Stop if there was a resolution error.
-        if (hadError)
+        if (hadStaticError)
             return;
 
         interpreter.interpret(statements);
@@ -81,14 +85,14 @@ public class Lox {
 
     private static void report(int line, String where, String message) {
         System.err.println("[line " + line + "] Error" + where + ": " + message);
-        hadError = true;
+        hadStaticError = true;
     }
 
-    static void error(int line, String message) { // 词法分析错误
+    static void error(int line, String message) { // StaticError
         report(line, "", message);
     }
 
-    static void error(Token token, String message) { // 句法分析错误
+    static void error(Token token, String message) {
         if (token.type == TokenType.EOF) {
             report(token.line, " at end", message);
         } else {
@@ -96,7 +100,7 @@ public class Lox {
         }
     }
 
-    static void runtimeError(RuntimeError error) { //
+    static void runtimeError(RuntimeError error) { // RuntimError
         System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
         hadRuntimeError = true;
     }

@@ -2,9 +2,9 @@ package com.zlox.tool;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.nio.file.Paths;
 
 public class GenerateAst {
     public static void main(String[] args) throws IOException {
@@ -18,7 +18,7 @@ public class GenerateAst {
                 "Assign   : Token name, Expr value",
                 "Binary   : Expr left, Token operator, Expr right",
                 "Call     : Expr callee, Token paren, List<Expr> arguments",
-                "Get      : Expr object, Token name", // 属性访问
+                "Get      : Expr object, Token name",
                 "Grouping : Expr expression",
                 "Literal  : Object value",
                 "Logical  : Expr left, Token operator, Expr right",

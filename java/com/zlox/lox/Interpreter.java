@@ -11,22 +11,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private final Map<Expr, Integer> locals = new HashMap<>();
 
     Interpreter() {
-        globals.define("clock", new LoxCallable() {
-            @Override
-            public int arity() {
-                return 0;
-            }
-
-            @Override
-            public Object call(Interpreter interpreter, List<Object> arguments) {
-                return (double) System.currentTimeMillis() / 1000.0;
-            }
-
-            @Override
-            public String toString() {
-                return "<native fn>";
-            }
-        });
+        globals.define("clock", new NativeFunctions.Clock());
+        globals.define("exit", new NativeFunctions.Exit());
     }
 
     void interpret(List<Stmt> statements) {
@@ -113,12 +99,10 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 checkNumberOperands(expr.operator, left, right);
                 return (double) left - (double) right;
             case PLUS:
-                if (left instanceof Double && right instanceof Double) {
+                if (left instanceof Double && right instanceof Double)
                     return (double) left + (double) right;
-                }
-                if (left instanceof String && right instanceof String) {
+                if (left instanceof String && right instanceof String)
                     return (String) left + (String) right;
-                }
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
             case SLASH:
                 checkNumberOperands(expr.operator, left, right);
@@ -166,8 +150,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             return ((LoxInstance) object).get(expr.name);
         }
 
-        throw new RuntimeError(expr.name,
-                "Only instances have properties.");
+        throw new RuntimeError(expr.name, "Only instances have properties.");
     }
 
     private void checkNumberOperands(Token operator, Object left, Object right) {
