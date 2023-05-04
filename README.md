@@ -38,11 +38,13 @@ declaration    → varDecl
                | statement ;
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 statement      → exprStmt
+               | forStmt
                | ifStmt
                | printStmt
                | whileStmt
                | block ;
 exprStmt       → expression ";" ;
+forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
 ifStmt         → "if" "(" expression ")" statement
                ( "else" statement )? ;
 printStmt      → "print" expression ";" ;
@@ -64,3 +66,5 @@ primary        → "true" | "false" | "nil"
                | "(" expression ")"
                | IDENTIFIER ;
 ```
+
++ `for`语句，并没有和其他的语句类似的实现，因为它使用了desugaring技术，将其转换成while语句来让后端更简单
