@@ -7,31 +7,20 @@ MAIN_CODE = $(CORE_DIR)$(CORE)
 MAIN_CLASS = com.zlox.lox.Lox
 GEN_CODE = com/zlox/tool/GenerateAst.java
 
-LIB = lib/
+LIB = lib
 JLINE = jline.jar
-
-# CP = $(LIB)$(JLINE):./
-CP = ./
-
-arg = ""
+CP = $(LIB)/$(JLINE):./
 
 .PHONY: all
-all:
-	echo "占位"
+all: $(LIB)
 
 $(LIB):
 	if [ ! -d "$(LIB)" ]; then mkdir $(LIB); fi
-
-.PHONY: build
-build: $(LIB)
-# 下载第三方库
-	if [ ! -f $(LIB)$(JLINE) ]; then wget -O $(LIB)$(JLINE) https://repo1.maven.org/maven2/org/jline/jline/3.21.0/jline-3.21.0.jar ; fi
+	if [ ! -f $(LIB)/$(JLINE) ]; then wget -O $(LIB)/$(JLINE) https://repo1.maven.org/maven2/org/jline/jline/3.21.0/jline-3.21.0.jar ; fi
 
 .PHONY: run
 run: $(LIB)
-# javac
 	$(JAVAC) -cp $(CP) $(MAIN_CODE)
-# java
 	$(JAVA) -cp $(CP) $(MAIN_CLASS) $(arg)
 
 	$(MAKE) clean
