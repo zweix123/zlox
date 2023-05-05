@@ -1,6 +1,8 @@
 #include <stdio.h>
 
 #include "vm.h"
+#include "common.h"
+#include "compiler.h"
 #include "debug.h"
 
 VM vm;
@@ -68,8 +70,7 @@ static InterpretResult run() {
 #undef READ_CONSTANT
 #undef BINARY_OP
 }
-InterpretResult interpret(Chunk *chunk) {
-    vm.chunk = chunk;
-    vm.ip = vm.chunk->code; // code是指针，则其为第一个位置的指针
-    return run();
+InterpretResult interpret(const char *source) {
+    compile(source);
+    return INTERPRET_OK;
 }
