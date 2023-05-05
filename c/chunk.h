@@ -6,6 +6,9 @@
 
 typedef enum {
     OP_CONSTANT, // op_constant
+    OP_NIL,      // nil: 压入nil
+    OP_TRUE,     // true: 压入true
+    OP_FALSE,    // false: 压入false
     OP_ADD,      // op_add +
     OP_SUBTRACT, // op_subtract -
     OP_MULTIPLY, // op_multiply *
