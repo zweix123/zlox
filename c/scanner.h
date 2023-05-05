@@ -45,7 +45,7 @@ typedef enum {
     TOKEN_VAR,    // token_var,
     TOKEN_WHILE,  // token_while,
 
-    TOKEN_ERRPR,  // token_error,
+    TOKEN_ERROR,  // token_error,
     TOKEN_EOF     // token_eof
 } TokenType;
 
@@ -53,10 +53,10 @@ typedef struct {
     TokenType type;
     const char *start;
     int length;
+    // 每个token的词素是这样被组织的, 一个字符串的起始指针和长度
+    // 因为C中的所有字符串都是常量, 且内容相同的字符串都是同一个内存的
     int line;
 } Token;
-// 每个token的词素是这样被组织的，一个字符串的起始指针和长度
-// 因为C中的所有字符串都是常量，且内容相同的字符串都是同一个内存的
 
 void initScanner(const char *source);
 Token scanToken();

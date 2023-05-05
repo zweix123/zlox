@@ -14,12 +14,15 @@ static void resetStack() {
 void initVM() {
     resetStack();
 }
+
 void freeVM() {
 }
+
 void push(Value value) {
     *vm.stackTop = value;
     vm.stackTop++;
 }
+
 Value pop() {
     vm.stackTop--;
     return *vm.stackTop;
@@ -52,13 +55,11 @@ static InterpretResult run() {
                 push(constant);
                 break;
             }
-            /* clang-format off */
-            case OP_ADD:      BINARY_OP(+); break;
+            case OP_ADD: BINARY_OP(+); break;
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
-            case OP_DIVIDE:   BINARY_OP(/); break;
+            case OP_DIVIDE: BINARY_OP(/); break;
             case OP_NEGATE: push(-pop()); break;
-            /* clang-format on */
             case OP_RETURN: {
                 printValue(pop());
                 printf("\n");
@@ -70,7 +71,21 @@ static InterpretResult run() {
 #undef READ_CONSTANT
 #undef BINARY_OP
 }
+
 InterpretResult interpret(const char *source) {
-    compile(source);
-    return INTERPRET_OK;
+    Chunk chunk;
+    initChunk(&chunk);
+
+    if (!compile(source, &chunk)) {
+        freeChunk(&chunk);
+        return INTERPRET_COMPILE_ERROR;
+    }
+
+    vm.chunk = &chunk;
+    vm.ip = vm.chunk->code;
+
+    InterpretResult result = run();
+
+    freeChunk(&chunk);
+    return result;
 }

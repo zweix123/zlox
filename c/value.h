@@ -11,9 +11,10 @@ typedef struct {
     Value *values;
 } ValueArray;
 
-void initValueArray(ValueArray *array);
-void writeValueArray(ValueArray *array, Value value);
-void freeValueArray(ValueArray *array);
-void printValue(Value value);
+void initValueArray(ValueArray *array);               // 初始化
+void writeValueArray(ValueArray *array, Value value); // 添加元素
+void freeValueArray(ValueArray *array);               // 释放内存
+
+void printValue(Value value);                         // 打印Value类型值
 
 #endif

@@ -1,4 +1,4 @@
-C = gcc
+C = g++
 
 C_FILE = main.c memory.c value.c chunk.c debug.c scanner.c compiler.c vm.c
 
