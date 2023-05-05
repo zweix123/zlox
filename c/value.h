@@ -19,11 +19,11 @@ typedef struct {
     } as;
 } Value;
 
-#define IS_BOOL(value)    ((value).type == VAL_BOOL)
-#define IS_NIL(value)     ((value).type == VAL_NIL)
-#define IS_NUMBER(value)  ((value).type == VAL_NUMBER)
-#define AS_BOOL(value)    ((value).as.boolean)
-#define AS_NUMBER(value)  ((value).as.number)
+#define IS_BOOL(value)   ((value).type == VAL_BOOL)
+#define IS_NIL(value)    ((value).type == VAL_NIL)
+#define IS_NUMBER(value) ((value).type == VAL_NUMBER)
+#define AS_BOOL(value)   ((value).as.boolean)
+#define AS_NUMBER(value) ((value).as.number)
 // 上面并没有类型检测
 // 下面要求提供正常的C值
 #define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
@@ -35,6 +35,8 @@ typedef struct {
     int count;
     Value *values;
 } ValueArray;
+
+bool valuesEqual(Value a, Value b);
 
 void initValueArray(ValueArray *array);               // 初始化
 void writeValueArray(ValueArray *array, Value value); // 添加元素
