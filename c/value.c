@@ -35,6 +35,7 @@ void printValue(Value value) {
 }
 
 bool valuesEqual(Value a, Value b) {
+    // 对于相等, 为什么不直接比较字节呢? 因为struct会有填充位, 并不能保证里面有什么
     if (a.type != b.type) return false;
     switch (a.type) {
         case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);

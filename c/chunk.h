@@ -5,7 +5,7 @@
 #include "value.h"
 
 typedef enum {
-    OP_CONSTANT, // op_constant
+    OP_CONSTANT, // op_constant: 压入常量, 参数为常量在常量池索引
     OP_NIL,      // nil: 压入nil
     OP_TRUE,     // true: 压入true
     OP_FALSE,    // false: 压入false

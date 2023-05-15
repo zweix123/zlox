@@ -5,12 +5,13 @@
 #include "scanner.h"
 
 typedef struct {
-    const char *start;
-    const char *current;
+    const char *start;   // 指向源码字符串的指针
+    const char *current; // 超尾
+    // 以上建立在C语言的字符串是存在同一个位置的
     int line;
 } Scanner;
 
-Scanner scanner;
+Scanner scanner; // 使用全局变量来避免调用函数时传入
 
 void initScanner(const char *source) {
     scanner.start = source;
@@ -33,11 +34,11 @@ static bool isAtEnd() {
 // 以下四个函数都是lookahead
 // 但是前两个没有副作用, 后两个有
 
-static char peek() {
-    return *scanner.current;
+static char peek() {         // 当前的下一个
+    return *scanner.current; // current是超尾
 }
 
-static char peekNext() {
+static char peekNext() { // 当前的下下一个
     if (isAtEnd()) return '\0';
     return scanner.current[1];
 }
@@ -47,7 +48,7 @@ static char advance() {
     return scanner.current[-1]; // *(scanner.current - 1)
 }
 
-static bool match(char expected) {
+static bool match(char expected) { // 有副作用
     if (isAtEnd()) return false;
     if (*scanner.current != expected) return false;
     scanner.current++;
@@ -81,10 +82,10 @@ static void skipWhitespace() {
                 if (c == '\n') scanner.line++;
                 advance();
                 break;
-            case '/': // 到这里只peek而没有advance
+            case '/':
                 if (peekNext() == '/') {
                     while (peek() != '\n' && !isAtEnd()) advance();
-                } else {
+                } else { // 到这里说明不是注释, 而c是peek过来的, 没有副作用
                     return;
                 }
                 break;
@@ -197,6 +198,8 @@ Token scanToken() {
     return errorToken("Unexpected character.");
 }
 
+// 下面的字符串数组是和TokeType枚举位置对应的, 而union本质是整数,
+// 继而通过枚举作为索引来找到对应的字符串
 const char *TokenTypeStr[] = {
     "TOKEN_LEFT_PAREN",
     "TOKEN_RIGHT_PAREN",

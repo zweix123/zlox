@@ -1,6 +1,5 @@
 package com.zlox.lox;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -73,7 +72,7 @@ public class Lox {
         List<Token> tokens = scanner.scanTokens(); // token列表
 
         Parser parser = new Parser(tokens);
-      
+
         List<Stmt> statements = parser.parse(); // 抽象语法树的根节点(列表)
 
         // // Stop if there was a syntax error.

@@ -4,6 +4,7 @@
 java/lib/
 
 **/*.out
+**/*.exe
 
 linenoise.c
 linenoise.h

@@ -51,8 +51,9 @@ static bool isFalsey(Value value) {
 }
 
 static InterpretResult run() {
-#define READ_BYTE()     (*vm.ip++)
-#define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+#define READ_BYTE() (*vm.ip++)                // read_byte
+#define READ_CONSTANT() \
+    (vm.chunk->constants.values[READ_BYTE()]) // read_constant
 #define BINARY_OP(valueType, op)                          \
     do {                                                  \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \

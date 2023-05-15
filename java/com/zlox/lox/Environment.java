@@ -9,7 +9,6 @@ public class Environment {
     private final Map<String, Object> values = new HashMap<>();
     // key string is token, 同名变量肯定不是同一个token, 但是可能指向同一个变量
 
-  
     Environment() {
         enclosing = null;
     }
