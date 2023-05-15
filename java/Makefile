@@ -29,8 +29,6 @@ run: $(LIB)
 clean:
 	rm -rf $(CORE_DIR)*.class
 
-###
-
 # 由脚本生成代码, 只在开发中使用
 .PHONY: gen
 gen: $(GEN_CODE)

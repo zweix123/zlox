@@ -1,10 +1,16 @@
 package com.zlox.lox;
 
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -32,6 +38,13 @@ public class Lox {
     }
 
     private static void runFile(String path) throws IOException {
+        File file = new File(path);
+
+        if (!file.exists()) {
+            System.err.println("Error: file does not exist");
+            System.exit(1);
+        }
+
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
 
@@ -60,7 +73,8 @@ public class Lox {
         List<Token> tokens = scanner.scanTokens(); // token列表
 
         Parser parser = new Parser(tokens);
-        List<Stmt> statements = parser.parse(); // 抽象语法树的根节点列表
+      
+        List<Stmt> statements = parser.parse(); // 抽象语法树的根节点(列表)
 
         // // Stop if there was a syntax error.
         if (hadStaticError)
@@ -93,7 +107,7 @@ public class Lox {
         }
     }
 
-    static void runtimeError(RuntimeError error) { //
+    static void runtimeError(RuntimeError error) { // RuntimError
         System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
         hadRuntimeError = true;
     }

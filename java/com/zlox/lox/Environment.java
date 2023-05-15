@@ -5,8 +5,11 @@ import java.util.Map;
 
 public class Environment {
     final Environment enclosing;
-    private final Map<String, Object> values = new HashMap<>(); // 这里使用String为key而不是token
 
+    private final Map<String, Object> values = new HashMap<>();
+    // key string is token, 同名变量肯定不是同一个token, 但是可能指向同一个变量
+
+  
     Environment() {
         enclosing = null;
     }

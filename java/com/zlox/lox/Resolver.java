@@ -16,16 +16,16 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     private enum FunctionType {
-        NONE,
-        FUNCTION,
-        INITIALIZER,
-        METHOD
+        NONE, // none
+        FUNCTION, // function
+        INITIALIZER, // initializer
+        METHOD // method
     }
 
     private enum ClassType {
-        NONE,
-        CLASS,
-        SUBCLASS
+        NONE, // none
+        CLASS, // class
+        SUBCLASS // subclass
     }
 
     void resolve(List<Stmt> statements) {
@@ -41,6 +41,58 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private void resolve(Expr expr) {
         expr.accept(this);
     }
+
+    //
+
+    private void beginScope() {
+        scopes.push(new HashMap<String, Boolean>());
+    }
+
+    private void endScope() {
+        scopes.pop();
+    }
+
+    private void declare(Token name) {
+        if (scopes.isEmpty())
+            return;
+        Map<String, Boolean> scope = scopes.peek();
+        if (scope.containsKey(name.lexeme)) {
+            Lox.error(name, "Already variable with this name in this scope.");
+        }
+        scope.put(name.lexeme, false);
+    }
+
+    private void define(Token name) {
+        if (scopes.isEmpty())
+            return;
+        scopes.peek().put(name.lexeme, true);
+    }
+
+    //
+
+    private void resolveLocal(Expr expr, Token name) {
+        for (int i = scopes.size() - 1; i >= 0; i--) {
+            if (scopes.get(i).containsKey(name.lexeme)) {
+                interpreter.resolve(expr, scopes.size() - 1 - i);
+                return;
+            }
+        }
+    }
+
+    private void resolveFunction(Stmt.Function function, FunctionType type) {
+        FunctionType enclosingFunction = currentFunction;
+        currentFunction = type;
+        beginScope();
+        for (Token param : function.params) {
+            declare(param);
+            define(param);
+        }
+        resolve(function.body);
+        endScope();
+        currentFunction = enclosingFunction;
+    }
+
+    //
 
     @Override
     public Void visitBlockStmt(Stmt.Block stmt) {
@@ -83,14 +135,6 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
-    private void beginScope() {
-        scopes.push(new HashMap<String, Boolean>());
-    }
-
-    private void endScope() {
-        scopes.pop();
-    }
-
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         resolve(stmt.expression);
@@ -104,19 +148,6 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
         resolveFunction(stmt, FunctionType.FUNCTION);
         return null;
-    }
-
-    private void resolveFunction(Stmt.Function function, FunctionType type) {
-        FunctionType enclosingFunction = currentFunction;
-        currentFunction = type;
-        beginScope();
-        for (Token param : function.params) {
-            declare(param);
-            define(param);
-        }
-        resolve(function.body);
-        endScope();
-        currentFunction = enclosingFunction;
     }
 
     @Override
@@ -157,23 +188,6 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
         define(stmt.name);
         return null;
-    }
-
-    private void declare(Token name) {
-        if (scopes.isEmpty())
-            return;
-
-        Map<String, Boolean> scope = scopes.peek();
-        if (scope.containsKey(name.lexeme)) {
-            Lox.error(name, "Already variable with this name in this scope.");
-        }
-        scope.put(name.lexeme, false);
-    }
-
-    private void define(Token name) {
-        if (scopes.isEmpty())
-            return;
-        scopes.peek().put(name.lexeme, true);
     }
 
     @Override
@@ -271,17 +285,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         if (!scopes.isEmpty() && scopes.peek().get(expr.name.lexeme) == Boolean.FALSE) {
             Lox.error(expr.name, "Can't read local variable in its own initializer.");
         }
-
         resolveLocal(expr, expr.name);
         return null;
-    }
-
-    private void resolveLocal(Expr expr, Token name) {
-        for (int i = scopes.size() - 1; i >= 0; i--) {
-            if (scopes.get(i).containsKey(name.lexeme)) {
-                interpreter.resolve(expr, scopes.size() - 1 - i);
-                return;
-            }
-        }
     }
 }
