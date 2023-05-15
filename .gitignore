@@ -1,2 +1,9 @@
+.vscode/
+
 **.class
 java/lib/
+
+**/*.out
+
+linenoise.c
+linenoise.h
