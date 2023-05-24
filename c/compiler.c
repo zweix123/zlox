@@ -139,6 +139,16 @@ static void number() {
     emitConstant(NUMBER_VAL(value));
 }
 
+static void string() {
+    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+    // 在这个函数里的调用流程比较复杂
+    // 1. 创建一个新字符数组拷贝字符串(字符串脱离原本的C编译器的管理)
+    // 2. 创建一个大小从满足的堆内存块
+    //    1. 强制转换成Obj, 设置type
+    //    2. 强制转换会ObjString, 设置其他属性(上面的字符串放入)
+    // 返回最后的ObjString
+}
+
 static void grouping() {
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
@@ -206,7 +216,7 @@ ParseRule rules[] = {
     [TOKEN_LESS] = {NULL, binary, PREC_COMPARISON},          // less
     [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},    // less_equal
     [TOKEN_IDENTIFIER] = {NULL, NULL, PREC_NONE},            // identifier
-    [TOKEN_STRING] = {NULL, NULL, PREC_NONE},                // string
+    [TOKEN_STRING] = {string, NULL, PREC_NONE},              // string
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},              // number
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},                   // and
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},                 // class

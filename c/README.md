@@ -1,3 +1,5 @@
+gcc -c object.c -I /home/netease/Projects/zlox/c
+
 ```
 .
 ├── common.h    // 通用声明, 比如用true和false表示bool

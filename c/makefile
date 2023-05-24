@@ -1,8 +1,8 @@
 C = gcc
-GDB = gdb
+DEBUGGER = gdb
 
-REF_FILE = memory.c value.c chunk.c debug.c scanner.c compiler.c vm.c
-THIRD_REF_FILE = linenoise.c linenoise.h
+REF_FILE = memory.c value.c chunk.c debug.c scanner.c compiler.c vm.c object.c
+THIRD_REF_FILE = linenoise.c 
 
 .PHONY: all
 all: 
@@ -19,16 +19,15 @@ run: main.c $(REF_FILE) $(THIRD_REF_FILE)
 	$(MAKE) clean
 
 .PHONY: test
-test: test.c $(REF_FILE) $(THIRD_REF_FILE)
-	$(C) test.c $(REF_FILE) $(THIRD_REF_FILE) -o test.exe
-	./test.exe
+test: main.c $(REF_FILE) $(THIRD_REF_FILE)
+	$(C) main.c $(REF_FILE) $(THIRD_REF_FILE) -o main.exe
+	./main.exe example.lox
 	$(MAKE) clean
 
-GDB_FILE_NAME = test
 .PHONY: gdb
-gdb: $(GDB_FILE_NAME).c $(REF_FILE) $(THIRD_REF_FILE)
-	$(C) -g $(GDB_FILE_NAME).c $(REF_FILE) $(THIRD_REF_FILE) -o $(GDB_FILE_NAME).exe
-	$(GDB) $(GDB_FILE_NAME).exe
+gdb: main.c $(REF_FILE) $(THIRD_REF_FILE)
+	$(C) -g main.c $(REF_FILE) $(THIRD_REF_FILE) -o main.exe
+	$(DEBUGGER) --args main.exe example.lox
 	$(MAKE) clean
 
 clean: 
