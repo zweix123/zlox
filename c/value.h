@@ -15,9 +15,9 @@ typedef enum {
 } ValueType;
 
 typedef struct {
-    ValueType type; // 4 byte
+    ValueType type;
 
-    union {         // 取max type byte
+    union {
         bool boolean;
         double number;
         Obj *obj;
@@ -33,7 +33,7 @@ typedef struct {
 #define AS_OBJ(value)    ((value).as.obj)
 #define AS_BOOL(value)   ((value).as.boolean)
 #define AS_NUMBER(value) ((value).as.number)
-// C -> union  // 要求C值正确
+// C -> union  // 要求C值正确(但不检测)
 #define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
 #define NIL_VAL           ((Value){VAL_NIL, {.number = 0}})
 #define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
@@ -47,10 +47,10 @@ typedef struct {
 
 bool valuesEqual(Value a, Value b);
 
-void initValueArray(ValueArray *array);               // 初始化
-void writeValueArray(ValueArray *array, Value value); // 添加元素
-void freeValueArray(ValueArray *array);               // 释放内存
+void initValueArray(ValueArray *array);
+void freeValueArray(ValueArray *array);
+void writeValueArray(ValueArray *array, Value value);
 
-void printValue(Value value);                         // 打印Value类型值
+void printValue(Value value);
 
 #endif

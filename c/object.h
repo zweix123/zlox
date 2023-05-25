@@ -15,11 +15,11 @@ typedef enum {
 
 struct Obj {
     ObjType type;
-    struct Obj *next; // intrusive list侵入式列表
+    struct Obj *next; // intrusive list侵入式列表,
+                      // 用来保证虚拟机可以找到每个堆内存的对象
 };
 
-// type punning->结构体继承?
-
+// type punning
 struct ObjString {
     // 一个ObjString结构体变量指针可以安全转换成Obj类型指针,
     // 然后正常访问type属性, 而实际上反向转换也是可以的(当然安全性由用户保证)
@@ -31,7 +31,9 @@ struct ObjString {
 
 ObjString *takeString(char *chars, int length);
 ObjString *copyString(const char *chars, int length);
+
 void printObject(Value value);
+void showObjString(ObjString *objstring);
 
 static bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

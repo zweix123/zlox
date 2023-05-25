@@ -10,8 +10,8 @@
 #endif
 
 typedef struct {
-    Token previous; // 当前token
-    Token current;  // 下一个token
+    Token previous;
+    Token current; // 超尾
     bool hadError;
     bool panicMode;
 } Parser;
@@ -19,11 +19,11 @@ typedef struct {
 Parser parser;
 
 typedef enum {
-    // 这里是优先级从低到高的排列，而C的enum会将枚举隐式的转换成整数，即优先级实现了数值的比较
+    // 优先级从低到高, C的enum可以隐式转换成整数, 直接比较符号就是优先级的比较
     PREC_NONE,
     PREC_ASSIGNMENT, // =
-    PREC_OR,         // or
-    PREC_AND,        // and
+    PREC_OR,         // |
+    PREC_AND,        // &
     PREC_EQUALITY,   // == !=
     PREC_COMPARISON, // < > <= >=
     PREC_TERM,       // + -
@@ -41,7 +41,7 @@ typedef struct {
     Precedence precedence; // 优先级
 } ParseRule;
 
-Chunk *compilingChunk;
+Chunk *compilingChunk; // chunk指针
 
 static Chunk *currentChunk() {
     return compilingChunk;
@@ -140,7 +140,8 @@ static void number() {
 }
 
 static void string() {
-    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+    emitConstant(OBJ_VAL(
+        copyString(parser.previous.start + 1, parser.previous.length - 2)));
     // 在这个函数里的调用流程比较复杂
     // 1. 创建一个新字符数组拷贝字符串(字符串脱离原本的C编译器的管理)
     // 2. 创建一个大小从满足的堆内存块

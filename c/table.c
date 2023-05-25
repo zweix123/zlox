@@ -122,7 +122,7 @@ void tableAddAll(Table *from, Table *to) {
 ObjString *
 tableFindString(Table *table, const char *chars, int length, uint32_t hash) {
     if (table->count == 0) return NULL;
-    uint32_t index = hash & table->capacity;
+    uint32_t index = hash % table->capacity;
     for (;;) {
         Entry *entry = &table->entries[index];
         if (entry->key == NULL) {
@@ -135,4 +135,32 @@ tableFindString(Table *table, const char *chars, int length, uint32_t hash) {
         }
         index = (index + 1) % table->capacity;
     }
+}
+
+void showEntry(Entry *entry) {
+    if (!entry) {
+        printf("%p: %p", NULL, NULL);
+        return;
+    }
+    if (entry->key) showObjString(entry->key);
+    else
+        printf("%p", NULL);
+    printf(" : ");
+    printValue(entry->value);
+}
+
+void showTable(Table *table) {
+    if (!table) {
+        printf("The table pointer is NULL");
+        return;
+    }
+    printf("Table{ capacity: %d\n", table->capacity);
+    printf("       count: %d\n", table->count);
+
+    for (int i = 0; i < table->capacity; i++) {
+        printf("       [%2d] ", i);
+        showEntry(&table->entries[i]);
+        printf("\n");
+    }
+    printf("}\n");
 }

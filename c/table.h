@@ -24,4 +24,7 @@ void tableAddAll(Table *from, Table *to); // copy
 ObjString *
 tableFindString(Table *table, const char *chars, int length, uint32_t hash);
 
+void showEntry(Entry *entry);
+void showTable(Table *table);
+
 #endif

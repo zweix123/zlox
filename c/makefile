@@ -4,9 +4,8 @@ DEBUGGER = gdb
 REF_FILE = memory.c value.c chunk.c debug.c scanner.c compiler.c vm.c object.c table.c
 THIRD_REF_FILE = linenoise.c 
 
-.PHONY: all
-all: 
-	echo "nothing"
+.PHONY: build
+build: $(THIRD_REF_FILE)
 
 $(THIRD_REF_FILE):
 	if [ ! -f linenoise.c ]; then wget -O linenoise.c https://raw.githubusercontent.com/antirez/linenoise/master/linenoise.c ; fi

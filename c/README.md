@@ -1,4 +1,5 @@
-gcc -c object.c -I /home/netease/Projects/zlox/c
++ 关键字`static`声明的函数具体静态链接, 只能在当前文件中使用
+
 
 ```
 .
@@ -90,11 +91,9 @@ typedef struct {
 
 Pratt Parsing，又称Top Down Operator Precedence Parsing，是一种很巧妙的算法，它实现简单、性能好，而且很容易定制扩展，尤其擅长解析表达式，擅长处理表达式操作符优先级(precedence)和结合性(associativity)。
 
-
 + Token分成两种
   + nul, 即prefix
   + led, 即infix
-
 
 算了，我不能理解。
 

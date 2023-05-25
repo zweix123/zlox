@@ -23,7 +23,6 @@ static void freeObject(Obj *object) {
             // 因为字符串里指向的字符串是创建的
             // 这个字符串示例本身也是先创建空间再构造的
             break;
-
         default: break;
     }
 }

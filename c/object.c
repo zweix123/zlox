@@ -68,3 +68,9 @@ void printObject(Value value) {
         default: break;
     }
 }
+
+void showObjString(ObjString *osp) {
+    if (!osp) printf("The ObjString pointer is NULL");
+    else
+        printf("OBJ_STRING(%s, length=%d)", osp->chars, osp->length);
+}
