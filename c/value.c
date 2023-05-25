@@ -45,13 +45,10 @@ bool valuesEqual(Value a, Value b) {
         case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
         case VAL_NIL: return true;
         case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
-        case VAL_OBJ: {
-            ObjString *aString = AS_STRING(a);
-            ObjString *bString = AS_STRING(b);
-            return aString->length == bString->length
-                   && memcmp(aString->chars, bString->chars, aString->length)
-                          == 0;
-        }
+        case VAL_OBJ:
+            return AS_OBJ(a) == AS_OBJ(b); // 因为所有的字符串都驻留在虚拟机中,
+                                           // 这样的话如果地址一样的话,
+                                           // 那么指向的真的是同一个字符串
         default: return false;
     }
 }

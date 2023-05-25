@@ -3,6 +3,7 @@
 
 #include "chunk.h"
 #include "value.h"
+#include "table.h"
 #define STACK_MAX 256
 
 typedef struct {
@@ -10,6 +11,7 @@ typedef struct {
     uint8_t *ip; // 指向即将执行的指令指针
     Value stack[STACK_MAX];
     Value *stackTop;
+    Table strings; // 用于string interning字符串驻留
     Obj *objects;
 } VM;
 
