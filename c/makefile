@@ -1,7 +1,7 @@
 C = gcc
 DEBUGGER = gdb
 
-REF_FILE = memory.c value.c chunk.c debug.c scanner.c compiler.c vm.c object.c
+REF_FILE = memory.c value.c chunk.c debug.c scanner.c compiler.c vm.c object.c table.c
 THIRD_REF_FILE = linenoise.c 
 
 .PHONY: all
