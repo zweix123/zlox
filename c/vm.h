@@ -11,6 +11,7 @@ typedef struct {
     uint8_t *ip;  // 模拟IP寄存器, 指向即将执行的指令指针
     Value stack[STACK_MAX]; // 运行时栈
     Value *stackTop;        // 栈指针
+    Table globals;          // 全局变量变量名
     Table strings;          // 用于string interning
     Obj *objects;           // 相当于堆内存
 } VM;

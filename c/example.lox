@@ -1,3 +1,8 @@
-print !(5 - 4 > 3 * 2 == ! nil);
-print "1" + "2";
-print "1" == "1";
+// print !(5 - 4 > 3 * 2 == ! nil);
+// print "1" + "2";
+// print "1" == "1";
+// var breakfast = "beignets";
+// var beverage = "cafe au lait";
+// breakfast = "beignets with " + beverage;
+// print breakfast;
+!(5 - 4 > 3 * 2 == ! nil);

@@ -11,6 +11,9 @@ typedef enum {
     OP_TRUE,     // true: 向栈中压入true
     OP_FALSE,    // false: 向栈中压入false
     OP_POP,      //
+    OP_GET_GLOBAL,    //
+    OP_DEFINE_GLOBAL, //
+    OP_SET_GLOBAL,    //
     OP_EQUAL, // equal: 取出栈顶两个元素进行比较, 并将结构压入栈中
     OP_GREATER,  // greater >:
     OP_LESS,     // less <:
