@@ -91,6 +91,16 @@ static void consume(TokenType type, const char *message) {
     errorAtCurrent(message);
 }
 
+static bool check(TokenType type) {
+    return parser.current.type == type;
+}
+
+static bool match(TokenType type) {
+    if (!check(type)) return false;
+    advance();
+    return true;
+}
+
 // 以上是前端
 // ========
 // 以下是后端
@@ -133,6 +143,8 @@ static void endCompiler() {
 static ParseRule *getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 static void expression();
+static void statement();
+static void declaration();
 
 static void number() {
     double value = strtod(parser.previous.start, NULL);
@@ -264,6 +276,20 @@ static void expression() {
     parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static void printStatement() {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+    emitByte(OP_PRINT);
+}
+
+static void declaration() {
+    statement();
+}
+
+static void statement() {
+    if (match(TOKEN_PRINT)) { printStatement(); }
+}
+
 bool compile(const char *source, Chunk *chunk) {
     initScanner(source);
     compilingChunk = chunk;
@@ -272,7 +298,7 @@ bool compile(const char *source, Chunk *chunk) {
     parser.panicMode = false;
 
     advance();
-    expression();
+    while (!match(TOKEN_EOF)) { declaration(); }
 
     consume(TOKEN_EOF, "Expect end of expression.");
     endCompiler();

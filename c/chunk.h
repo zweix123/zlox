@@ -19,6 +19,7 @@ typedef enum {
     OP_DIVIDE,   // divide /:
     OP_NOT,      // not !:
     OP_NEGATE,   // negate 前缀-
+    OP_PRINT,    //
     OP_RETURN,   // return
 } OpCode;        // operation code
 
