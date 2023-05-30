@@ -32,6 +32,7 @@ typedef enum {
     OP_PRINT,         // op, "取出"栈顶元素并打印
     OP_JUMP,          //
     OP_JUMP_IF_FALSE, //
+    OP_LOOP,          //
     OP_RETURN,        // return
 } OpCode;             // operation code
 
