@@ -6,5 +6,11 @@
 // breakfast = "beignets with " + beverage;
 // print breakfast;
 // !(5 - 4 > 3 * 2 == ! nil);
+// var a = 1;
+// print a;
 var a = 1;
 print a;
+{
+    var a = 2;
+    print a;
+}

@@ -201,6 +201,7 @@ Token scanToken() {
 // 下面的字符串数组是和TokeType枚举位置对应的, 而union本质是整数,
 // 继而通过枚举作为索引来找到对应的字符串
 const char* TokenTypeStr[] = {
+    "NONE",
     "TOKEN_LEFT_PAREN",
     "TOKEN_RIGHT_PAREN",
     "TOKEN_LEFT_BRACE",

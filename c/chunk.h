@@ -6,16 +6,20 @@
 
 // 虚拟机字节码
 typedef enum {
-    OP_CONSTANT, // constant: 从常量池取出常量压入栈, args: 常量在常量池的索引
-    OP_NIL,      // nil: 向栈中压入nil
-    OP_TRUE,     // true: 向栈中压入true
-    OP_FALSE,    // false: 向栈中压入false
-    OP_POP,      //
-    OP_GET_LOCAL,
-    OP_SET_LOCAL,
-    OP_GET_GLOBAL,    //
-    OP_DEFINE_GLOBAL, //
-    OP_SET_GLOBAL,    //
+    OP_CONSTANT, // op arg: 从常量池中取出索引为arg的常量放入栈中
+    OP_NIL,      // op: 将NIL放入栈中
+    OP_TRUE,     // 类似上
+    OP_FALSE,    // 类似上
+    OP_POP,      // 弹出栈顶
+    // (全局)变量名存在常量池中,
+    // 下面三个命令的arg即为其索引,
+    // 其值存储在global哈希表中
+    OP_DEFINE_GLOBAL, // op arg, 取出栈顶元素作为变量名的value放入global
+    OP_GET_GLOBAL, // op arg, 取出变量名的value放入栈中
+    OP_SET_GLOBAL, // op arg, 将栈顶元素作为变量名在global中的value
+    // 而局部变量直接存在栈中, 下面的arg是栈的地址
+    OP_GET_LOCAL, // op arg, 取出栈arg位置的值入栈
+    OP_SET_LOCAL, // op_arg, 直接修改arg位置的值
     OP_EQUAL, // equal: 取出栈顶两个元素进行比较, 并将结构压入栈中
     OP_GREATER,  // greater >:
     OP_LESS,     // less <:

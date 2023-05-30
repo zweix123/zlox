@@ -18,6 +18,13 @@ void freeTable(Table* table) {
     initTable(table);
 }
 
+void copyTable(Table* from, Table* to) {
+    for (int i = 0; i < from->capacity; i++) {
+        Entry* entry = &from->entries[i];
+        if (entry->key != NULL) { tableSet(to, entry->key, entry->value); }
+    }
+}
+
 static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
     uint32_t index = key->hash % capacity;
     Entry* tombstone = NULL;
@@ -26,7 +33,7 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
         if (entry->key == NULL) {
             // 键为NULL, 空
             if (IS_NIL(entry->value)) {
-                // 值为NIL, 真 空
+                // 值为NIL, 真的空桶
                 return tombstone != NULL ? tombstone : entry;
             } else {
                 // 值不为NIL(那就是BOOL-true), 墓碑
@@ -112,13 +119,6 @@ bool tableDelete(Table* table, ObjString* key) {
     return true;
 }
 
-void tableAddAll(Table* from, Table* to) {
-    for (int i = 0; i < from->capacity; i++) {
-        Entry* entry = &from->entries[i];
-        if (entry->key != NULL) { tableSet(to, entry->key, entry->value); }
-    }
-}
-
 ObjString*
 tableFindString(Table* table, const char* chars, int length, uint32_t hash) {
     if (table->count == 0) return NULL;
@@ -126,10 +126,11 @@ tableFindString(Table* table, const char* chars, int length, uint32_t hash) {
     for (;;) {
         Entry* entry = &table->entries[index];
         if (entry->key == NULL) {
-            if (IS_NIL(entry->value)) return NULL; // 真空桶
+            if (IS_NIL(entry->value)) return NULL; // 真的空桶
             // 这里还有一个分支是墓碑(虽然虚拟机不会删除), 冷处理了
         } else if (
-            entry->key->length == length && entry->key->hash == hash
+            entry->key->length == length
+            && entry->key->hash == hash // 先比较len和hash, 更快
             && memcmp(entry->key->chars, chars, length) == 0) {
             return entry->key;
         }

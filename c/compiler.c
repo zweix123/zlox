@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
@@ -10,13 +10,11 @@
 #endif
 
 typedef struct {
-    Token previous;
-    Token current; // 超尾
+    Token previous; // current
+    Token current;  // 超尾
     bool hadError;
     bool panicMode;
 } Parser;
-
-Parser parser;
 
 typedef enum {
     // 优先级从低到高, C的enum可以隐式转换成整数, 直接比较符号就是优先级的比较
@@ -41,7 +39,21 @@ typedef struct {
     Precedence precedence; // 优先级
 } ParseRule;
 
-Chunk* compilingChunk; // chunk指针
+typedef struct {
+    Token name;
+    int depth;
+} Local;
+
+typedef struct {
+    Local locals[UINT8_COUNT];
+    int localCount;
+    int scopeDepth;
+} Compiler;
+
+Parser parser;
+// 下面两个指针的作用是, 通过全局变量避免修改每个函数的接口
+Compiler* current = NULL;
+Chunk* compilingChunk;
 
 static Chunk* currentChunk() {
     return compilingChunk;
@@ -101,13 +113,10 @@ static bool match(TokenType type) {
     return true;
 }
 
-// 以上是前端
-// ========
-// 以下是后端
+// ===
 
 static void emitByte(uint8_t byte) {
     writeChunk(currentChunk(), byte, parser.previous.line);
-    // 还记得么? previous是当前的
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -140,25 +149,115 @@ static void endCompiler() {
 #endif
 }
 
+static void beginScope() {
+    current->scopeDepth++;
+}
+
+static void endScope() {
+    current->scopeDepth--;
+    while (current->localCount > 0
+           && current->locals[current->localCount - 1].depth
+                  > current->scopeDepth) {
+        emitByte(OP_POP);
+        current->localCount--;
+    }
+}
+
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
+
+static bool identifiersEqual(Token* a, Token* b) {
+    if (a->length != b->length) return false;
+    return memcmp(a->start, b->start, a->length) == 0;
+}
 
 static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
 }
 
+static void addLocal(Token name) {
+    if (current->localCount == UINT8_COUNT) {
+        error("Too many local variables in function.");
+        return;
+    }
+
+    Local* local = &current->locals[current->localCount++];
+    local->name = name;
+    // 严格的说这里经过了三次拷贝
+    local->depth = -1; // 调用这个函数的是declareVariable,
+                       // 当时只声明而未定义,
+                       // 以flag -1标记
+}
+
+static void declareVariable() {
+    if (current->scopeDepth == 0) return; // 这是针对局部变量的, 全局变量不需要
+    Token* name = &parser.previous;
+    for (int i = current->localCount - 1; i >= 0; i--) {
+        Local* local = &current->locals[i];
+        if (local->depth != -1 && local->depth < current->scopeDepth) { break; }
+        if (identifiersEqual(name, &local->name)) {
+            error("Already a variable with this name in this scope.");
+        }
+    }
+    addLocal(*name);
+}
+
 static uint8_t parseVariable(const char* errorMessage) {
     consume(TOKEN_IDENTIFIER, errorMessage);
+
+    declareVariable();
+    if (current->scopeDepth > 0) return 0; // 局部变量不需要名字所在的常量表索引
+
     return identifierConstant(&parser.previous);
 }
 
+static void markInitialized() {
+    current->locals[current->localCount - 1].depth = current->scopeDepth;
+}
+
 static void defineVariable(uint8_t global) {
+    if (current->scopeDepth > 0) { // 局部变量不需要全局变量相关的声明指令
+        markInitialized(); // 定义了, 要标记下
+        return;
+    }
     emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
 static void expression();
-static void statement();
 static void declaration();
+
+static int resolveLocal(Compiler* compiler, Token* name) {
+    for (int i = compiler->localCount - 1; i >= 0; i--) {
+        Local* local = &compiler->locals[i];
+        if (identifiersEqual(name, &local->name)) {
+            if (local->depth == -1) {
+                error("Can't read local variable in its own initializer.");
+            }
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void namedVariable(Token name, bool canAssign) {
+    uint8_t getOp, setOp;
+    int arg = resolveLocal(current, &name);
+    if (arg != -1) {
+        getOp = OP_GET_LOCAL;
+        setOp = OP_SET_LOCAL;
+    } else {
+        arg = identifierConstant(&name);
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
+    }
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitBytes(setOp, (uint8_t)arg);
+    } else {
+        emitBytes(getOp, (uint8_t)arg);
+    }
+}
 
 static void number(bool canAssign) {
     double value = strtod(parser.previous.start, NULL);
@@ -174,16 +273,6 @@ static void string(bool canAssign) {
     //    1. 强制转换成Obj, 设置type
     //    2. 强制转换会ObjString, 设置其他属性(上面的字符串放入)
     // 返回最后的ObjString
-}
-
-static void namedVariable(Token name, bool canAssign) {
-    uint8_t arg = identifierConstant(&name);
-    if (canAssign && match(TOKEN_EQUAL)) {
-        expression();
-        emitBytes(OP_SET_GLOBAL, arg);
-    } else {
-        emitBytes(OP_GET_GLOBAL, arg);
-    }
 }
 
 static void variable(bool canAssign) {
@@ -235,6 +324,8 @@ static void literal(bool canAssign) {
         default: return;
     }
 }
+
+// ===
 
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN] = {grouping, NULL, PREC_NONE},        // left_paren
@@ -311,6 +402,7 @@ static void expression() {
 
 static void varDeclaration() {
     uint8_t global = parseVariable("Expect variable name.");
+    // 先解析将变量名放到常量表中
 
     if (match(TOKEN_EQUAL)) {
         expression();
@@ -318,7 +410,9 @@ static void varDeclaration() {
         emitByte(OP_NIL);
     }
     consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+
     defineVariable(global);
+    // 然后再将"定义全局变量"的指令字节码写入chunk
 }
 
 static void expressionStatement() {
@@ -327,10 +421,39 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
+static void block() {
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) { declaration(); }
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+}
+
 static void printStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
     emitByte(OP_PRINT);
+}
+
+static void statement() {
+    if (match(TOKEN_PRINT)) {
+        printStatement();
+    } else if (match(TOKEN_LEFT_BRACE)) {
+        beginScope();
+        block();
+        endScope();
+    } else {
+        expressionStatement();
+    }
+}
+
+static void synchronize();
+
+static void declaration() {
+    if (match(TOKEN_VAR)) {
+        varDeclaration();
+    } else {
+        statement();
+    }
+
+    if (parser.panicMode) synchronize();
 }
 
 static void synchronize() {
@@ -354,26 +477,18 @@ static void synchronize() {
     }
 }
 
-static void declaration() {
-    if (match(TOKEN_VAR)) {
-        varDeclaration();
-    } else {
-        statement();
-    }
-
-    if (parser.panicMode) synchronize();
-}
-
-static void statement() {
-    if (match(TOKEN_PRINT)) {
-        printStatement();
-    } else {
-        expressionStatement();
-    }
+static void initCompiler(Compiler* compiler) {
+    compiler->localCount = 0;
+    compiler->scopeDepth = 0;
+    current = compiler;
 }
 
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
+
+    Compiler compiler;
+    initCompiler(&compiler);
+
     compilingChunk = chunk;
 
     parser.hadError = false;

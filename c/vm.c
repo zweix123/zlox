@@ -109,13 +109,13 @@ static InterpretResult run() {
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
+            case OP_POP: pop(); break;
             case OP_DEFINE_GLOBAL: {
                 ObjString* name = READ_STRING();
                 tableSet(&vm.globals, name, peek(0));
                 pop();
                 break;
             }
-            case OP_POP: pop(); break;
             case OP_GET_LOCAL: {
                 uint8_t slot = READ_BYTE();
                 push(vm.stack[slot]);
