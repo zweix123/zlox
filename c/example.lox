@@ -20,4 +20,7 @@
 //     print 2;
 // }
 // print true and "ok";
-print false or "ok";
+// print false or "ok";
+for (var a = 1; a <= 10; a = a + 1) {
+    print a;
+}

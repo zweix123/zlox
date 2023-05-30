@@ -142,3 +142,13 @@ IDENTIFIER     → ALPHA ( ALPHA | DIGIT )* ;
 ALPHA          → "a" ... "z" | "A" ... "Z" | "_" ;
 DIGIT          → "0" ... "9" ;
 ```
+
+## develop
+
+添加`switch`
+```
+switchStmt     → "switch" "(" expression ")"
+                 "{" switchCase* defaultCase? "}" ;
+switchCase     → "case" expression ":" statement* ;
+defaultCase    → "default" ":" statement* ;
+```
