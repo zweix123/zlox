@@ -14,8 +14,10 @@
 //     var a = 2;
 //     print a;
 // }
-if (false) {
-    print 1;
-} else {
-    print 2;
-}
+// if (false) {
+//     print 1;
+// } else {
+//     print 2;
+// }
+// print true and "ok";
+print false or "ok";

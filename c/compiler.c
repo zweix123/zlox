@@ -20,8 +20,8 @@ typedef enum {
     // 优先级从低到高, C的enum可以隐式转换成整数, 直接比较符号就是优先级的比较
     PREC_NONE,
     PREC_ASSIGNMENT, // =
-    PREC_OR,         // |
-    PREC_AND,        // &
+    PREC_OR,         // ||
+    PREC_AND,        // &&
     PREC_EQUALITY,   // == !=
     PREC_COMPARISON, // < > <= >=
     PREC_TERM,       // + -
@@ -131,6 +131,16 @@ static int emitJump(uint8_t instruction) {
     return currentChunk()->count - 2;
 }
 
+static void emitLoop(int loopStart) {
+    emitByte(OP_LOOP);
+
+    int offset = currentChunk()->count - loopStart + 2;
+    if (offset > UINT16_MAX) error("Loop body too large.");
+
+    emitByte((offset >> 8) & 0xff);
+    emitByte(offset & 0xff);
+}
+
 static void emitReturn() {
     emitByte(OP_RETURN);
 }
@@ -237,6 +247,26 @@ static void defineVariable(uint8_t global) {
         return;
     }
     emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+static void add_(bool canAssign) {
+    int endJump =
+        emitJump(OP_JUMP_IF_FALSE); // 当&&被运行时, 作为一个中缀,
+                                    // 左边已经知道了, 如果是假则跳过右边
+    emitByte(OP_POP);
+    parsePrecedence(PREC_AND);
+    patchJump(endJump);
+}
+
+static void or_(bool canAssign) {
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    int endJump = emitJump(OP_JUMP);
+
+    patchJump(elseJump); // 左侧值为假, 则跳过"跳过全部的语句" -> 不跳过
+    emitByte(OP_POP);
+
+    parsePrecedence(PREC_OR);
+    patchJump(endJump);
 }
 
 static void expression();
@@ -367,7 +397,7 @@ ParseRule rules[] = {
     [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},        // identifier
     [TOKEN_STRING] = {string, NULL, PREC_NONE},              // string
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},              // number
-    [TOKEN_AND] = {NULL, NULL, PREC_NONE},                   // and
+    [TOKEN_AND] = {NULL, add_, PREC_AND},                    // and
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},                 // class
     [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},                  // else
     [TOKEN_FALSE] = {literal, NULL, PREC_NONE},              // false
@@ -375,7 +405,7 @@ ParseRule rules[] = {
     [TOKEN_FUN] = {NULL, NULL, PREC_NONE},                   // fun
     [TOKEN_IF] = {NULL, NULL, PREC_NONE},                    // if
     [TOKEN_NIL] = {literal, NULL, PREC_NONE},                // nil
-    [TOKEN_OR] = {NULL, NULL, PREC_NONE},                    // or
+    [TOKEN_OR] = {NULL, or_, PREC_OR},                       // or
     [TOKEN_PRINT] = {NULL, NULL, PREC_NONE},                 // print
     [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},                // return
     [TOKEN_SUPER] = {NULL, NULL, PREC_NONE},                 // super
@@ -455,6 +485,21 @@ static void ifStatement() {
     patchJump(elseJump); // 回填, 同上
 }
 
+static void whileStatement() {
+    int loopStart = currentChunk()->count;
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    statement();
+    emitLoop(loopStart);
+
+    patchJump(exitJump);
+    emitByte(OP_POP);
+}
+
 static void block() {
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) { declaration(); }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
@@ -471,6 +516,8 @@ static void statement() {
         printStatement();
     } else if (match(TOKEN_IF)) {
         ifStatement();
+        // } else if (match(TOKEN_WHILE)) {
+        //     whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         beginScope();
         block();
