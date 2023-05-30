@@ -124,6 +124,13 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
     emitByte(byte2);
 }
 
+static int emitJump(uint8_t instruction) {
+    emitByte(instruction);
+    emitByte(0xff);
+    emitByte(0xff);
+    return currentChunk()->count - 2;
+}
+
 static void emitReturn() {
     emitByte(OP_RETURN);
 }
@@ -140,6 +147,15 @@ static uint8_t makeConstant(Value value) {
 
 static void emitConstant(Value value) {
     emitBytes(OP_CONSTANT, makeConstant(value));
+}
+
+static void patchJump(int offset) {
+    int jump = currentChunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX) { error("Too much code to jump over."); }
+
+    currentChunk()->code[offset] = (jump >> 8) & 0xff;
+    currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
 static void endCompiler() {
@@ -225,6 +241,7 @@ static void defineVariable(uint8_t global) {
 
 static void expression();
 static void declaration();
+static void statement();
 
 static int resolveLocal(Compiler* compiler, Token* name) {
     for (int i = compiler->localCount - 1; i >= 0; i--) {
@@ -421,6 +438,23 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
+static void ifStatement() {
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+    int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP); // 为了pop condition, 这句话在编译器一定被执行,
+                      // 但是在虚拟中不一定, 因为上面那个指令会跳转,
+                      // 从而把这个pop跳过去
+    statement();
+    int elseJump = emitJump(OP_JUMP);
+    // 下面两个先后顺序不关键, 因为回填不影响新加入的指令
+    patchJump(thenJump); // backpathcing回填
+    emitByte(OP_POP);    // 同上
+    if (match(TOKEN_ELSE)) statement();
+    patchJump(elseJump); // 回填, 同上
+}
+
 static void block() {
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) { declaration(); }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
@@ -435,6 +469,8 @@ static void printStatement() {
 static void statement() {
     if (match(TOKEN_PRINT)) {
         printStatement();
+    } else if (match(TOKEN_IF)) {
+        ifStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         beginScope();
         block();

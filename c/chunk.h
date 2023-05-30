@@ -21,17 +21,19 @@ typedef enum {
     OP_GET_LOCAL, // op arg, 取出栈arg位置的值入栈
     OP_SET_LOCAL, // op_arg, 直接修改arg位置的值
     OP_EQUAL, // equal: 取出栈顶两个元素进行比较, 并将结构压入栈中
-    OP_GREATER,  // greater >:
-    OP_LESS,     // less <:
-    OP_ADD,      // add +:
-    OP_SUBTRACT, // subtract 中缀-:
-    OP_MULTIPLY, // multiply *:
-    OP_DIVIDE,   // divide /:
-    OP_NOT,      // not !:
-    OP_NEGATE,   // negate 前缀-
-    OP_PRINT,    //
-    OP_RETURN,   // return
-} OpCode;        // operation code
+    OP_GREATER,       // greater >:
+    OP_LESS,          // less <:
+    OP_ADD,           // add +:
+    OP_SUBTRACT,      // subtract 中缀-:
+    OP_MULTIPLY,      // multiply *:
+    OP_DIVIDE,        // divide /:
+    OP_NOT,           // not !:
+    OP_NEGATE,        // negate 前缀-
+    OP_PRINT,         // op, "取出"栈顶元素并打印
+    OP_JUMP,          //
+    OP_JUMP_IF_FALSE, //
+    OP_RETURN,        // return
+} OpCode;             // operation code
 
 // 并没有<=、>=、!=
 //  因为 !(a < b) -> (a >= b)
