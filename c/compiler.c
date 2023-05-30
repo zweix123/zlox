@@ -41,13 +41,13 @@ typedef struct {
     Precedence precedence; // 优先级
 } ParseRule;
 
-Chunk *compilingChunk; // chunk指针
+Chunk* compilingChunk; // chunk指针
 
-static Chunk *currentChunk() {
+static Chunk* currentChunk() {
     return compilingChunk;
 }
 
-static void errorAt(Token *token, const char *message) {
+static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
 
@@ -65,11 +65,11 @@ static void errorAt(Token *token, const char *message) {
     parser.hadError = true;
 }
 
-static void error(const char *message) { // errorAtPrevious
+static void error(const char* message) { // errorAtPrevious
     errorAt(&parser.previous, message);
 }
 
-static void errorAtCurrent(const char *message) {
+static void errorAtCurrent(const char* message) {
     errorAt(&parser.current, message);
 }
 
@@ -83,7 +83,7 @@ static void advance() {
     }
 }
 
-static void consume(TokenType type, const char *message) {
+static void consume(TokenType type, const char* message) {
     if (parser.current.type == type) {
         advance();
         return;
@@ -140,14 +140,14 @@ static void endCompiler() {
 #endif
 }
 
-static ParseRule *getRule(TokenType type);
+static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static uint8_t identifierConstant(Token *name) {
+static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
 }
 
-static uint8_t parseVariable(const char *errorMessage) {
+static uint8_t parseVariable(const char* errorMessage) {
     consume(TOKEN_IDENTIFIER, errorMessage);
     return identifierConstant(&parser.previous);
 }
@@ -209,7 +209,7 @@ static void unary(bool canAssign) {
 
 static void binary(bool canAssign) {
     TokenType operatorType = parser.previous.type;
-    ParseRule *rule = getRule(operatorType);
+    ParseRule* rule = getRule(operatorType);
     parsePrecedence((Precedence)(rule->precedence + 1));
 
     switch (operatorType) {
@@ -278,7 +278,7 @@ ParseRule rules[] = {
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},                 // error
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE}};                  // eof
 
-static ParseRule *getRule(TokenType type) {
+static ParseRule* getRule(TokenType type) {
     return &rules[type];
 }
 
@@ -372,7 +372,7 @@ static void statement() {
     }
 }
 
-bool compile(const char *source, Chunk *chunk) {
+bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
     compilingChunk = chunk;
 

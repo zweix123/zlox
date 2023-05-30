@@ -8,5 +8,6 @@
 
 // #define DEBUG_PRINT_CODE      // debug_print_code
 // #define DEBUG_TRACE_EXECUTION // debug_trace_execution
+#define UINT8_COUNT (UINT8_MAX + 1)
 
 #endif

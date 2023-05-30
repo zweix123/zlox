@@ -6,8 +6,8 @@
 
 #define OBJ_TYPE(value)   (AS_OBJ(value)->type)
 #define IS_STRING(value)  isObjType(value, OBJ_STRING)
-#define AS_STRING(value)  ((ObjString *)AS_OBJ(value))
-#define AS_CSTRING(value) (((ObjString *)AS_OBJ(value))->chars)
+#define AS_STRING(value)  ((ObjString*)AS_OBJ(value))
+#define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
 
 typedef enum {
     OBJ_STRING,
@@ -15,7 +15,7 @@ typedef enum {
 
 struct Obj {
     ObjType type;
-    struct Obj *next; // intrusive list侵入式列表,
+    struct Obj* next; // intrusive list侵入式列表,
                       // 用来保证虚拟机可以找到每个堆内存的对象
 };
 
@@ -25,15 +25,15 @@ struct ObjString {
     // 然后正常访问type属性, 而实际上反向转换也是可以的(当然安全性由用户保证)
     Obj obj;
     int length;
-    char *chars;
+    char* chars;
     uint32_t hash;
 };
 
-ObjString *takeString(char *chars, int length);
-ObjString *copyString(const char *chars, int length);
+ObjString* takeString(char* chars, int length);
+ObjString* copyString(const char* chars, int length);
 
 void printObject(Value value);
-void showObjString(ObjString *objstring);
+void showObjString(ObjString* objstring);
 
 static bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

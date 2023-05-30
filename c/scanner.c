@@ -5,15 +5,15 @@
 #include "scanner.h"
 
 typedef struct {
-    const char *start;   // 指向源码字符串的指针
-    const char *current; // 超尾
+    const char* start;   // 指向源码字符串的指针
+    const char* current; // 超尾
     // 以上建立在C语言的字符串是存在同一个位置的
     int line;
 } Scanner;
 
 Scanner scanner; // 使用全局变量来避免调用函数时传入
 
-void initScanner(const char *source) {
+void initScanner(const char* source) {
     scanner.start = source;
     scanner.current = source;
     scanner.line = 1;
@@ -63,7 +63,7 @@ static Token makeToken(TokenType type) {
         .line = scanner.line};
 }
 
-static Token errorToken(const char *message) {
+static Token errorToken(const char* message) {
     return (Token){
         .type = TOKEN_ERROR,
         .start = message,
@@ -115,7 +115,7 @@ static Token string() {
 }
 
 static TokenType
-checkKeyword(int start, int length, const char *rest, TokenType type) {
+checkKeyword(int start, int length, const char* rest, TokenType type) {
     if (scanner.current - scanner.start == start + length
         && memcmp(scanner.start + start, rest, length) == 0) {
         return type;
@@ -200,7 +200,7 @@ Token scanToken() {
 
 // 下面的字符串数组是和TokeType枚举位置对应的, 而union本质是整数,
 // 继而通过枚举作为索引来找到对应的字符串
-const char *TokenTypeStr[] = {
+const char* TokenTypeStr[] = {
     "TOKEN_LEFT_PAREN",
     "TOKEN_RIGHT_PAREN",
     "TOKEN_LEFT_BRACE",

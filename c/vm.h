@@ -7,13 +7,13 @@
 #define STACK_MAX 256
 
 typedef struct {
-    Chunk *chunk; // 字节码和常量池
-    uint8_t *ip;  // 模拟IP寄存器, 指向即将执行的指令指针
+    Chunk* chunk;           // 字节码
+    uint8_t* ip;            // IP寄存器模拟
     Value stack[STACK_MAX]; // 运行时栈
-    Value *stackTop;        // 栈指针
-    Table globals;          // 全局变量变量名
-    Table strings;          // 用于string interning
-    Obj *objects;           // 相当于堆内存
+    Value* stackTop;        // 栈顶指针
+    Table globals;          // 全局变量
+    Table strings;          // 字符串驻留
+    Obj* objects;           // 不定内存(链表)
 } VM;
 
 typedef enum {
@@ -22,11 +22,11 @@ typedef enum {
     INTERPRET_RUNTIME_ERROR  // runtime
 } InterpretResult;
 
-extern VM vm; // extern关键字用于声明一个变量或函数是在其他文件中定义的
+extern VM vm;
 
 void initVM();
 void freeVM();
-InterpretResult interpret(const char *source);
+InterpretResult interpret(const char* source);
 
 void push(Value value);
 Value pop();

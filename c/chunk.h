@@ -11,6 +11,8 @@ typedef enum {
     OP_TRUE,     // true: 向栈中压入true
     OP_FALSE,    // false: 向栈中压入false
     OP_POP,      //
+    OP_GET_LOCAL,
+    OP_SET_LOCAL,
     OP_GET_GLOBAL,    //
     OP_DEFINE_GLOBAL, //
     OP_SET_GLOBAL,    //
@@ -37,16 +39,16 @@ typedef enum {
 typedef struct {
     int count;
     int capacity;
-    uint8_t *code;
+    uint8_t* code;
     // 以上三个实现一个vector存储字节码
-    int *lines;
+    int* lines;
     // 这个数组维护上面字节码数组对应索引的字节码在源代码中的行号
     ValueArray constants; // 常量池, 也是一个vector
 } Chunk;
 
-void initChunk(Chunk *chunk);
-void freeChunk(Chunk *chunk);
-void writeChunk(Chunk *chunk, uint8_t byte, int line);
-int addConstant(Chunk *chunk, Value value);
+void initChunk(Chunk* chunk);
+void freeChunk(Chunk* chunk);
+void writeChunk(Chunk* chunk, uint8_t byte, int line);
+int addConstant(Chunk* chunk, Value value);
 
 #endif
