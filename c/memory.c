@@ -15,7 +15,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 
 static void freeObject(Obj* object) {
     switch (object->type) {
-        case OBJ_STRING:
+        case OBJ_STRING: {
             ObjString* string = (ObjString*)object;
             FREE_ARRAY(char, string->chars, string->length + 1);
             FREE(ObjString, object);
@@ -23,12 +23,15 @@ static void freeObject(Obj* object) {
             // 因为字符串里指向的字符串是创建的
             // 这个字符串示例本身也是先创建空间再构造的
             break;
-        case OBJ_FUNCTION:
+        }
+        case OBJ_FUNCTION: {
             ObjFunction* function = (ObjFunction*)object;
             freeChunk(&function->chunk);
             // name是ObjString类型的, 在其内部有嵌入式链表, 会自动管理析构
             FREE(ObjFunction, object);
             break;
+        }
+
         default: break;
     }
 }

@@ -1,33 +1,36 @@
-C = gcc
+CC = gcc
 DEBUGGER = gdb
+TARGET_FILE = target.lox
+CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2 -Wno-unused-function
 
-REF_FILE = memory.c value.c chunk.c debug.c scanner.c compiler.c vm.c object.c table.c
-THIRD_REF_FILE = linenoise.c 
+SRCS := $(wildcard *.c)
+DEPS := $(patsubst %.c,%.d,$(SRCS))
+OBJS := $(patsubst %.c,%.o,$(SRCS))
+EXEC = main.exe
 
-.PHONY: build
-build: $(THIRD_REF_FILE)
+.PHONY: all clean test gdb
 
-$(THIRD_REF_FILE):
-	if [ ! -f linenoise.c ]; then wget -O linenoise.c https://raw.githubusercontent.com/antirez/linenoise/master/linenoise.c ; fi
-	if [ ! -f linenoise.h ]; then wget -O linenoise.h https://raw.githubusercontent.com/antirez/linenoise/master/linenoise.h ; fi
+all: $(EXEC)
 
-.PHONY: run
-run: main.c $(REF_FILE) $(THIRD_REF_FILE)
-	$(C) main.c $(REF_FILE) $(THIRD_REF_FILE) -o main.exe
-	./main.exe
-	$(MAKE) clean
+-include $(DEPS)
 
-.PHONY: test
-test: main.c $(REF_FILE) $(THIRD_REF_FILE)
-	$(C) main.c $(REF_FILE) $(THIRD_REF_FILE) -o main.exe
-	./main.exe example.lox
-	$(MAKE) clean
 
-.PHONY: gdb
-gdb: main.c $(REF_FILE) $(THIRD_REF_FILE)
-	$(C) -g main.c $(REF_FILE) $(THIRD_REF_FILE) -o main.exe
-	$(DEBUGGER) --args main.exe example.lox
-	$(MAKE) clean
+$(EXEC): $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@
 
-clean: 
-	rm ./*.exe
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+%.d: %.c
+	$(CC) $(CFLAGS) -MM $< > $@
+
+clean:
+	rm "$(EXEC)"
+	rm *.d
+	rm *.o
+
+test: $(EXEC)
+	./$(EXEC) $(TARGET_FILE)
+
+gdb: $(EXEC)
+	$(DEBUGGER) --args $(EXEC) $(TARGET_FILE)

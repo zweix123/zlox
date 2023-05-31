@@ -6,5 +6,8 @@ java/lib/
 **/*.out
 **/*.exe
 
+**/*.d
+**/*.o
+
 linenoise.c
 linenoise.h

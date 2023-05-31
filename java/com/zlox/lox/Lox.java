@@ -6,15 +6,12 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
-
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
+// import org.jline.reader.LineReader;
+// import org.jline.reader.LineReaderBuilder;
+// import org.jline.terminal.Terminal;
+// import org.jline.terminal.TerminalBuilder;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class Lox {
     private static final Interpreter interpreter = new Interpreter();
@@ -54,12 +51,16 @@ public class Lox {
     }
 
     private static void runPrompt() throws IOException {
-        Terminal terminal = TerminalBuilder.terminal();
-        LineReader reader = LineReaderBuilder.builder().terminal(terminal).build();
+        // Terminal terminal = TerminalBuilder.terminal();
+        // LineReader reader = LineReaderBuilder.builder().terminal(terminal).build();
+        InputStreamReader input = new InputStreamReader(System.in);
+        BufferedReader reader = new BufferedReader(input);
 
         String prompt = "> ";
         for (;;) {
-            String line = reader.readLine(prompt);
+            // String line = reader.readLine(prompt);
+            System.out.print(prompt);
+            String line = reader.readLine();
             if (line == null)
                 break;
             run(line);
