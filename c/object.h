@@ -2,14 +2,18 @@
 #define clox_object_h
 
 #include "common.h"
+#include "chunk.h"
 #include "value.h"
 
-#define OBJ_TYPE(value)   (AS_OBJ(value)->type)
-#define IS_STRING(value)  isObjType(value, OBJ_STRING)
-#define AS_STRING(value)  ((ObjString*)AS_OBJ(value))
-#define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
+#define OBJ_TYPE(value)    (AS_OBJ(value)->type)
+#define IS_FUNCTION(value) isObjType(value, OBJ_FUNCTION)
+#define IS_STRING(value)   isObjType(value, OBJ_STRING)
+#define AS_FUNCTION(value) ((ObjFunction*)AS_OBJ(value))
+#define AS_STRING(value)   ((ObjString*)AS_OBJ(value))
+#define AS_CSTRING(value)  (((ObjString*)AS_OBJ(value))->chars)
 
 typedef enum {
+    OBJ_FUNCTION,
     OBJ_STRING,
 } ObjType;
 
@@ -18,6 +22,13 @@ struct Obj {
     struct Obj* next; // intrusive list侵入式列表,
                       // 用来保证虚拟机可以找到每个堆内存的对象
 };
+
+typedef struct {
+    Obj obj;
+    int arity;       // 参数数量
+    Chunk chunk;     // 函数逻辑字节码
+    ObjString* name; // 函数名称
+} ObjFunction;
 
 // type punning
 struct ObjString {
@@ -29,10 +40,13 @@ struct ObjString {
     uint32_t hash;
 };
 
+ObjFunction* newFunction();
+
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 
 void printObject(Value value);
+void printFunction(ObjFunction* function);
 void showObjString(ObjString* objstring);
 
 static bool isObjType(Value value, ObjType type) {
