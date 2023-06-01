@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
@@ -67,6 +68,28 @@ static Chunk* currentChunk() {
     return &current->function->chunk;
 }
 
+static void initCompiler(Compiler* compiler, FunctionType type) {
+    compiler->enclosing = current;
+    compiler->function = NULL;
+    compiler->type = type;
+    compiler->localCount = 0;
+    compiler->scopeDepth = 0;
+
+    compiler->function = newFunction();
+    current = compiler;
+    if (type != TYPE_SCRIPT) {
+        current->function->name =
+            copyString(parser.previous.start, parser.previous.length);
+    }
+    // 编译模拟栈的0索引由块自己使用
+    Local* local = &current->locals[current->localCount++];
+    local->depth = 0;
+    local->name.start = "";
+    local->name.length = 0;
+}
+
+// ===
+
 static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
@@ -119,28 +142,6 @@ static bool match(TokenType type) {
     if (!check(type)) return false;
     advance();
     return true;
-}
-
-// ===
-
-static void initCompiler(Compiler* compiler, FunctionType type) {
-    compiler->enclosing = current;
-    compiler->function = NULL;
-    compiler->type = type;
-    compiler->localCount = 0;
-    compiler->scopeDepth = 0;
-
-    compiler->function = newFunction();
-    current = compiler;
-    if (type != TYPE_SCRIPT) {
-        current->function->name =
-            copyString(parser.previous.start, parser.previous.length);
-    }
-    // 编译模拟栈的0索引由块自己使用
-    Local* local = &current->locals[current->localCount++];
-    local->depth = 0;
-    local->name.start = "";
-    local->name.length = 0;
 }
 
 // ===
@@ -199,6 +200,8 @@ static void patchJump(int offset) {
     currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
+// ===
+
 static ObjFunction* endCompiler() {
     emitReturn();
     ObjFunction* function = current->function;
@@ -217,6 +220,8 @@ static ObjFunction* endCompiler() {
     return function;
 }
 
+// ===
+
 static void beginScope() {
     current->scopeDepth++;
 }
@@ -231,8 +236,7 @@ static void endScope() {
     }
 }
 
-static ParseRule* getRule(TokenType type);
-static void parsePrecedence(Precedence precedence);
+// ===
 
 static bool identifiersEqual(Token* a, Token* b) {
     if (a->length != b->length) return false;
@@ -293,8 +297,11 @@ static void defineVariable(uint8_t global) {
 }
 
 static void expression();
-static void declaration();
 static void statement();
+static void declaration();
+static void block();
+static ParseRule* getRule(TokenType type);
+static void parsePrecedence(Precedence precedence);
 
 static uint8_t argumentList() {
     uint8_t argCount = 0;
@@ -311,24 +318,9 @@ static uint8_t argumentList() {
     return argCount;
 }
 
-static void add_(bool canAssign) {
-    int endJump =
-        emitJump(OP_JUMP_IF_FALSE); // 当&&被运行时, 作为一个中缀,
-                                    // 左边已经知道了, 如果是假则跳过右边
-    emitByte(OP_POP);
-    parsePrecedence(PREC_AND);
-    patchJump(endJump);
-}
-
-static void or_(bool canAssign) {
-    int elseJump = emitJump(OP_JUMP_IF_FALSE);
-    int endJump = emitJump(OP_JUMP);
-
-    patchJump(elseJump); // 左侧值为假, 则跳过"跳过全部的语句" -> 不跳过
-    emitByte(OP_POP);
-
-    parsePrecedence(PREC_OR);
-    patchJump(endJump);
+static void call(bool canAssign) {
+    uint8_t argCount = argumentList();
+    emitBytes(OP_CALL, argCount);
 }
 
 static int resolveLocal(Compiler* compiler, Token* name) {
@@ -364,6 +356,10 @@ static void namedVariable(Token name, bool canAssign) {
     }
 }
 
+static void variable(bool canAssign) {
+    namedVariable(parser.previous, canAssign);
+}
+
 static void number(bool canAssign) {
     double value = strtod(parser.previous.start, NULL);
     emitConstant(NUMBER_VAL(value));
@@ -380,8 +376,13 @@ static void string(bool canAssign) {
     // 返回最后的ObjString
 }
 
-static void variable(bool canAssign) {
-    namedVariable(parser.previous, canAssign);
+static void literal(bool canAssign) {
+    switch (parser.previous.type) {
+        case TOKEN_TRUE: emitByte(OP_TRUE); break;
+        case TOKEN_FALSE: emitByte(OP_FALSE); break;
+        case TOKEN_NIL: emitByte(OP_NIL); break;
+        default: return;
+    }
 }
 
 static void grouping(bool canAssign) {
@@ -421,18 +422,24 @@ static void binary(bool canAssign) {
     }
 }
 
-static void call(bool canAssign) {
-    uint8_t argCount = argumentList();
-    emitBytes(OP_CALL, argCount);
+static void add_(bool canAssign) {
+    int endJump =
+        emitJump(OP_JUMP_IF_FALSE); // 当&&被运行时, 作为一个中缀,
+                                    // 左边已经知道了, 如果是假则跳过右边
+    emitByte(OP_POP);
+    parsePrecedence(PREC_AND);
+    patchJump(endJump);
 }
 
-static void literal(bool canAssign) {
-    switch (parser.previous.type) {
-        case TOKEN_TRUE: emitByte(OP_TRUE); break;
-        case TOKEN_FALSE: emitByte(OP_FALSE); break;
-        case TOKEN_NIL: emitByte(OP_NIL); break;
-        default: return;
-    }
+static void or_(bool canAssign) {
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    int endJump = emitJump(OP_JUMP);
+
+    patchJump(elseJump); // 左侧值为假, 则跳过"跳过全部的语句" -> 不跳过
+    emitByte(OP_POP);
+
+    parsePrecedence(PREC_OR);
+    patchJump(endJump);
 }
 
 // ===
@@ -523,6 +530,39 @@ static void varDeclaration() {
 
     defineVariable(global);
     // 然后再将"定义全局变量"的指令字节码写入chunk
+}
+
+static void function(FunctionType type) {
+    Compiler compiler;
+    initCompiler(&compiler, type);
+    beginScope();
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            current->function->arity++;
+            if (current->function->arity > 255) {
+                errorAtCurrent("Can't have more than 255 parameters.");
+            }
+            uint8_t constant = parseVariable("Expect parameter name.");
+            defineVariable(constant);
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+    block();
+
+    ObjFunction* function = endCompiler();
+    emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
+}
+
+static void funDeclaration() {
+    // 和下面的变量声明很像
+    uint8_t global = parseVariable("Expect function name.");
+    markInitialized(); // 但是这里和变量很不一样, 声明之后就定义了,
+                       // 这在递归中是很有必要的
+    function(TYPE_FUNCTION);
+    defineVariable(global);
 }
 
 static void expressionStatement() {
@@ -621,39 +661,6 @@ static void block() {
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
 
-static void function(FunctionType type) {
-    Compiler compiler;
-    initCompiler(&compiler, type);
-    beginScope();
-
-    consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
-    if (!check(TOKEN_RIGHT_PAREN)) {
-        do {
-            current->function->arity++;
-            if (current->function->arity > 255) {
-                errorAtCurrent("Can't have more than 255 parameters.");
-            }
-            uint8_t constant = parseVariable("Expect parameter name.");
-            defineVariable(constant);
-        } while (match(TOKEN_COMMA));
-    }
-    consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
-    consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
-    block();
-
-    ObjFunction* function = endCompiler();
-    emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
-}
-
-static void funDeclaration() {
-    // 和下面的变量声明很像
-    uint8_t global = parseVariable("Expect function name.");
-    markInitialized(); // 但是这里和变量很不一样, 声明之后就定义了,
-                       // 这在递归中是很有必要的
-    function(TYPE_FUNCTION);
-    defineVariable(global);
-}
-
 static void printStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
@@ -674,12 +681,12 @@ static void returnStatement() {
 }
 
 static void statement() {
-    if (match(TOKEN_PRINT)) {
-        printStatement();
-    } else if (match(TOKEN_FOR)) {
+    if (match(TOKEN_FOR)) {
         forStatement();
     } else if (match(TOKEN_IF)) {
         ifStatement();
+    } else if (match(TOKEN_PRINT)) {
+        printStatement();
     } else if (match(TOKEN_RETURN)) {
         returnStatement();
     } else if (match(TOKEN_WHILE)) {
@@ -691,20 +698,6 @@ static void statement() {
     } else {
         expressionStatement();
     }
-}
-
-static void synchronize();
-
-static void declaration() {
-    if (match(TOKEN_FUN)) {
-        funDeclaration();
-    } else if (match(TOKEN_VAR)) {
-        varDeclaration();
-    } else {
-        statement();
-    }
-
-    if (parser.panicMode) synchronize();
 }
 
 static void synchronize() {
@@ -728,6 +721,17 @@ static void synchronize() {
     }
 }
 
+static void declaration() {
+    if (match(TOKEN_FUN)) {
+        funDeclaration();
+    } else if (match(TOKEN_VAR)) {
+        varDeclaration();
+    } else {
+        statement();
+    }
+    if (parser.panicMode) synchronize();
+}
+
 ObjFunction* compile(const char* source) {
     initScanner(source);
 
@@ -742,5 +746,4 @@ ObjFunction* compile(const char* source) {
 
     ObjFunction* function = endCompiler();
     return parser.hadError ? NULL : function;
-    // consume(TOKEN_EOF, "Expect end of expression.");
 }

@@ -92,7 +92,7 @@ void printNative() {
 }
 
 void printObjString(ObjString* objstring) {
-    printf("OBJ_STRING(%s, length=%d)", objstring->chars, objstring->length);
+    printf("\"%s\"", objstring->chars);
 }
 
 void printObject(Value value) {
