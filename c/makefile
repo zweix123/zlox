@@ -1,11 +1,17 @@
+VPATH = .
+
 CC = gcc
 DEBUGGER = gdb
-TARGET_FILE = target.lox
+TEST_FILE = test.lox
 CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2 -Wno-unused-function
 
+BUILD := build
+# BUILD := .
+$(shell mkdir -p $(BUILD))
+
 SRCS := $(wildcard *.c)
-DEPS := $(patsubst %.c,%.d,$(SRCS))
-OBJS := $(patsubst %.c,%.o,$(SRCS))
+DEPS := $(patsubst %.c,$(BUILD)/%.d,$(SRCS))
+OBJS := $(patsubst %.c,$(BUILD)/%.o,$(SRCS))
 EXEC = main.exe
 
 .PHONY: all clean test gdb
@@ -14,23 +20,22 @@ all: $(EXEC)
 
 -include $(DEPS)
 
-
 $(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $@
 
-%.o: %.c
+$(BUILD)/%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-%.d: %.c
-	$(CC) $(CFLAGS) -MM $< > $@
+$(BUILD)/%.d: %.c
+	$(CC) $(CFLAGS) -MM $< -MT "$(BUILD)/$*.o" -MF $@ 
 
 clean:
+	rm $(BUILD)/*.d
+	rm $(BUILD)/*.o
 	rm "$(EXEC)"
-	rm *.d
-	rm *.o
 
 test: $(EXEC)
-	./$(EXEC) $(TARGET_FILE)
+	./$(EXEC) $(TEST_FILE)
 
 gdb: $(EXEC)
-	$(DEBUGGER) --args $(EXEC) $(TARGET_FILE)
+	$(DEBUGGER) --args $(EXEC) $(TEST_FILE)

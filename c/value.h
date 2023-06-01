@@ -39,13 +39,13 @@ typedef struct {
 #define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
 #define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
+bool valuesEqual(Value a, Value b);
+
 typedef struct {
     int capacity;
     int count;
     Value* values;
 } ValueArray;
-
-bool valuesEqual(Value a, Value b);
 
 void initValueArray(ValueArray* array);
 void freeValueArray(ValueArray* array);

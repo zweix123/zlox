@@ -5,14 +5,17 @@
 #include "chunk.h"
 #include "value.h"
 
-#define OBJ_TYPE(value)    (AS_OBJ(value)->type)
+#define OBJ_TYPE(value) (AS_OBJ(value)->type)
+// check
 #define IS_FUNCTION(value) isObjType(value, OBJ_FUNCTION)
 #define IS_NATIVE(value)   isObjType(value, OBJ_NATIVE)
 #define IS_STRING(value)   isObjType(value, OBJ_STRING)
+// Value -> 具体的Object
 #define AS_FUNCTION(value) ((ObjFunction*)AS_OBJ(value))
 #define AS_NATIVE(value)   (((ObjNative*)AS_OBJ(value))->function)
 #define AS_STRING(value)   ((ObjString*)AS_OBJ(value))
-#define AS_CSTRING(value)  (((ObjString*)AS_OBJ(value))->chars)
+
+// #define AS_CSTRING(value)  (((ObjString*)AS_OBJ(value))->chars)
 
 typedef enum {
     OBJ_FUNCTION,
@@ -40,7 +43,6 @@ typedef struct {
     NativeFn function;
 } ObjNative;
 
-// type punning
 struct ObjString {
     // 一个ObjString结构体变量指针可以安全转换成Obj类型指针,
     // 然后正常访问type属性, 而实际上反向转换也是可以的(当然安全性由用户保证)
@@ -57,8 +59,6 @@ ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 
 void printObject(Value value);
-void printFunction(ObjFunction* function);
-void showObjString(ObjString* objstring);
 
 static bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

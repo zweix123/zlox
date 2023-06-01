@@ -2,23 +2,23 @@ fun fib(n) {
   if (n < 2) return n;
   return fib(n - 2) + fib(n - 1);
 }
-
 var start = clock();
-var f = fib(35);
+var f = fib(29);
+// var f = fib(5);
 print clock() -start;
 
-// fun gcd(a, b) {
-//     if (b == 0) {
-//         return a;
-//     } else {
-//         var t = a;
-//         while (t - b >= 0) {
-//             t = t - b;
-//         }
-//         return gcd(b, t);
-//     }
-// }
-// print gcd(25, 35);
+fun gcd(a, b) {
+    if (b == 0) {
+        return a;
+    } else {
+        var t = a;
+        while (t - b >= 0) {
+            t = t - b;
+        }
+        return gcd(b, t);
+    }
+}
+print gcd(25, 35);
 
 // 跟踪调用栈
 // fun a() { b(); }

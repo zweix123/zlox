@@ -77,14 +77,7 @@ ObjString* copyString(const char* chars, int length) {
     return allocateString(heapChars, length, hash);
 }
 
-void printObject(Value value) {
-    switch (OBJ_TYPE(value)) {
-        case OBJ_NATIVE: printf("<native fn>"); break;
-        case OBJ_STRING: printf("%s", AS_CSTRING(value)); break;
-        case OBJ_FUNCTION: printFunction(AS_FUNCTION(value)); break;
-        default: break;
-    }
-}
+// ===
 
 void printFunction(ObjFunction* function) {
     if (function->name == NULL) { // 给调试用的
@@ -94,8 +87,19 @@ void printFunction(ObjFunction* function) {
     printf("<fn %s>", function->name->chars);
 }
 
-void showObjString(ObjString* osp) {
-    if (!osp) printf("The ObjString pointer is NULL");
-    else
-        printf("OBJ_STRING(%s, length=%d)", osp->chars, osp->length);
+void printNative() {
+    printf("<native fn>");
+}
+
+void printObjString(ObjString* objstring) {
+    printf("OBJ_STRING(%s, length=%d)", objstring->chars, objstring->length);
+}
+
+void printObject(Value value) {
+    switch (OBJ_TYPE(value)) {
+        case OBJ_FUNCTION: printFunction(AS_FUNCTION(value)); break;
+        case OBJ_NATIVE: printNative(); break;
+        case OBJ_STRING: printObjString(AS_STRING(value)); break;
+        default: break;
+    }
 }
