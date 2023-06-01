@@ -13,6 +13,8 @@ typedef struct {
     ObjFunction* function;
     uint8_t* ip;  // 返回地址
     Value* slots; // 虚拟机的栈中该函数可以使用的第一个slot槽
+                  // 这里的指针的语义不是数组, 而是指针, 全局只有一个常量池,
+                  // 在调用栈中接力
 } CallFrame;
 
 typedef struct {
@@ -28,8 +30,8 @@ typedef struct {
 
 typedef enum {
     INTERPRET_OK,            // ok
-    INTERPRET_COMPILE_ERROR, // compile
-    INTERPRET_RUNTIME_ERROR  // runtime
+    INTERPRET_COMPILE_ERROR, // compile_error
+    INTERPRET_RUNTIME_ERROR  // runtime_error
 } InterpretResult;
 
 extern VM vm;

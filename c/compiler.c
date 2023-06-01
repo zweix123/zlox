@@ -49,7 +49,8 @@ typedef enum {
     TYPE_SCRIPT    // type_script
 } FunctionType;
 
-typedef struct {
+typedef struct Compiler {
+    struct Compiler* enclosing;
     ObjFunction* function;
     FunctionType type;
     Local locals[UINT8_COUNT];
@@ -122,6 +123,28 @@ static bool match(TokenType type) {
 
 // ===
 
+static void initCompiler(Compiler* compiler, FunctionType type) {
+    compiler->enclosing = current;
+    compiler->function = NULL;
+    compiler->type = type;
+    compiler->localCount = 0;
+    compiler->scopeDepth = 0;
+
+    compiler->function = newFunction();
+    current = compiler;
+    if (type != TYPE_SCRIPT) {
+        current->function->name =
+            copyString(parser.previous.start, parser.previous.length);
+    }
+    // 编译模拟栈的0索引由块自己使用
+    Local* local = &current->locals[current->localCount++];
+    local->depth = 0;
+    local->name.start = "";
+    local->name.length = 0;
+}
+
+// ===
+
 static void emitByte(uint8_t byte) {
     writeChunk(currentChunk(), byte, parser.previous.line);
 }
@@ -149,6 +172,7 @@ static void emitLoop(int loopStart) {
 }
 
 static void emitReturn() {
+    emitByte(OP_NIL);
     emitByte(OP_RETURN);
 }
 
@@ -185,6 +209,11 @@ static ObjFunction* endCompiler() {
             function->name != NULL ? function->name->chars : "<script>");
     }
 #endif
+    current =
+        current->enclosing; // 这里, 直接就把当前层的compiler结构体变量丢弃了,
+                            // 因为我们绑定的是C语言下的局部变量,
+                            // 由C语言的栈管理, 其实有一个隐含问题,
+                            // 如果代码有恶意大量嵌套可能导致C爆栈
     return function;
 }
 
@@ -251,6 +280,7 @@ static uint8_t parseVariable(const char* errorMessage) {
 }
 
 static void markInitialized() {
+    if (current->scopeDepth == 0) return; // 全局名称不在这里管理
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
@@ -260,6 +290,25 @@ static void defineVariable(uint8_t global) {
         return;
     }
     emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+static void expression();
+static void declaration();
+static void statement();
+
+static uint8_t argumentList() {
+    uint8_t argCount = 0;
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            expression();
+            if (argCount == 255) {
+                error("Can't have more than 255 arguments.");
+            }
+            argCount++;
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+    return argCount;
 }
 
 static void add_(bool canAssign) {
@@ -281,10 +330,6 @@ static void or_(bool canAssign) {
     parsePrecedence(PREC_OR);
     patchJump(endJump);
 }
-
-static void expression();
-static void declaration();
-static void statement();
 
 static int resolveLocal(Compiler* compiler, Token* name) {
     for (int i = compiler->localCount - 1; i >= 0; i--) {
@@ -376,6 +421,11 @@ static void binary(bool canAssign) {
     }
 }
 
+static void call(bool canAssign) {
+    uint8_t argCount = argumentList();
+    emitBytes(OP_CALL, argCount);
+}
+
 static void literal(bool canAssign) {
     switch (parser.previous.type) {
         case TOKEN_TRUE: emitByte(OP_TRUE); break;
@@ -388,7 +438,7 @@ static void literal(bool canAssign) {
 // ===
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN] = {grouping, NULL, PREC_NONE},        // left_paren
+    [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},        // left_paren
     [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},           // right_paren
     [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},            // left_brace
     [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},           // right_brace
@@ -571,10 +621,56 @@ static void block() {
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
 
+static void function(FunctionType type) {
+    Compiler compiler;
+    initCompiler(&compiler, type);
+    beginScope();
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            current->function->arity++;
+            if (current->function->arity > 255) {
+                errorAtCurrent("Can't have more than 255 parameters.");
+            }
+            uint8_t constant = parseVariable("Expect parameter name.");
+            defineVariable(constant);
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+    block();
+
+    ObjFunction* function = endCompiler();
+    emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
+}
+
+static void funDeclaration() {
+    // 和下面的变量声明很像
+    uint8_t global = parseVariable("Expect function name.");
+    markInitialized(); // 但是这里和变量很不一样, 声明之后就定义了,
+                       // 这在递归中是很有必要的
+    function(TYPE_FUNCTION);
+    defineVariable(global);
+}
+
 static void printStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
     emitByte(OP_PRINT);
+}
+
+static void returnStatement() {
+    if (current->type == TYPE_SCRIPT) {
+        error("Can't return from top-level code.");
+    }
+    if (match(TOKEN_SEMICOLON)) {
+        emitReturn();
+    } else {
+        expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+        emitByte(OP_RETURN);
+    }
 }
 
 static void statement() {
@@ -584,6 +680,8 @@ static void statement() {
         forStatement();
     } else if (match(TOKEN_IF)) {
         ifStatement();
+    } else if (match(TOKEN_RETURN)) {
+        returnStatement();
     } else if (match(TOKEN_WHILE)) {
         whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
@@ -598,7 +696,9 @@ static void statement() {
 static void synchronize();
 
 static void declaration() {
-    if (match(TOKEN_VAR)) {
+    if (match(TOKEN_FUN)) {
+        funDeclaration();
+    } else if (match(TOKEN_VAR)) {
         varDeclaration();
     } else {
         statement();
@@ -626,21 +726,6 @@ static void synchronize() {
         }
         advance();
     }
-}
-
-static void initCompiler(Compiler* compiler, FunctionType type) {
-    compiler->function = NULL;
-    compiler->type = type;
-    compiler->localCount = 0;
-    compiler->scopeDepth = 0;
-
-    compiler->function = newFunction();
-    current = compiler;
-    // 编译模拟栈的0索引由块自己使用
-    Local* local = &current->locals[current->localCount++];
-    local->depth = 0;
-    local->name.start = "";
-    local->name.length = 0;
 }
 
 ObjFunction* compile(const char* source) {

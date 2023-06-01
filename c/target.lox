@@ -1,6 +1,36 @@
-for (var a = 1; a <= 10; a = a + 1) {
-    print a;
+fun fib(n) {
+  if (n < 2) return n;
+  return fib(n - 2) + fib(n - 1);
 }
+
+var start = clock();
+var f = fib(35);
+print clock() -start;
+
+// fun gcd(a, b) {
+//     if (b == 0) {
+//         return a;
+//     } else {
+//         var t = a;
+//         while (t - b >= 0) {
+//             t = t - b;
+//         }
+//         return gcd(b, t);
+//     }
+// }
+// print gcd(25, 35);
+
+// 跟踪调用栈
+// fun a() { b(); }
+// fun b() { c(); }
+// fun c() {
+//   c("too", "many");
+// }
+// a();
+
+// for (var a = 1; a <= 10; a = a + 1) {
+//     print a;
+// }
 
 // print true and "ok";
 // print false or "ok";
