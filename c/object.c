@@ -77,6 +77,12 @@ ObjString* copyString(const char* chars, int length) {
     return allocateString(heapChars, length, hash);
 }
 
+ObjClosure* newClosure(ObjFunction* function) {
+    ObjClosure* closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+    closure->function = function;
+    return closure;
+}
+
 // ===
 
 void printFunction(ObjFunction* function) {
@@ -87,7 +93,7 @@ void printFunction(ObjFunction* function) {
     printf("<fn %s>", function->name->chars);
 }
 
-void printNative() {
+void printNative(void*) {
     printf("<native fn>");
 }
 
@@ -95,11 +101,16 @@ void printObjString(ObjString* objstring) {
     printf("\"%s\"", objstring->chars);
 }
 
+void printObjClosure(ObjClosure* closure) {
+    printFunction(closure->function);
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_FUNCTION: printFunction(AS_FUNCTION(value)); break;
-        case OBJ_NATIVE: printNative(); break;
+        case OBJ_NATIVE: printNative(AS_NATIVE(value)); break;
         case OBJ_STRING: printObjString(AS_STRING(value)); break;
+        case OBJ_CLOSURE: printObjClosure(AS_CLOSURE(value)); break;
         default: break;
     }
 }

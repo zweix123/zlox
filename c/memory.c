@@ -32,7 +32,12 @@ static void freeObject(Obj* object) {
             FREE(ObjFunction, object);
             break;
         }
-
+        case OBJ_CLOSURE: {
+            // 依然没有管理底层的ObjFunction, 它有自己的析构管理
+            // 而且语义上也是合理的, 因为闭包不应该拥有函数, 一个函数可以被多个闭包捕获
+            FREE(ObjClosure, object);
+            break;
+        }
         default: break;
     }
 }

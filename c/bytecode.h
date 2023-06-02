@@ -4,10 +4,11 @@
 // 虚拟机字节码
 typedef enum {
     OP_CONSTANT, // op arg: 从常量池中取出索引为arg的常量放入栈中
-    OP_NIL,      // op: 将NIL放入栈中
-    OP_TRUE,     // 类似上
-    OP_FALSE,    // 类似上
-    OP_POP,      // 弹出栈顶
+    OP_CLOSURE, // 同上, 但是取出的ObjString是闭包名
+    OP_NIL,     // op: 将NIL放入栈中
+    OP_TRUE,    // 类似上
+    OP_FALSE,   // 类似上
+    OP_POP,     // 弹出栈顶
     // (全局)变量名存在常量池中,
     // 下面三个命令的arg即为其索引,
     // 其值存储在global哈希表中

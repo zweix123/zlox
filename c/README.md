@@ -2,6 +2,31 @@
 + 关键字`extern`声明的变量表示在其他文件定义
 
 + C命令行库：linenoise
++ 搜索“闭包转换 closure conversion”和“Lambda提升 lambda lifting”就可以开始探索黑客们设计了各种各样的方式来编译闭包
++ upvalue上值指的是一个闭包函数中的局部变量.每个闭包都维护一个上值数组，每个上值对应闭包使用的外围局部变量  
+    开放上值来表示一个指向仍在栈中的局部变量的上值。当变量移动到堆中时，我们就关闭上值，而结果自然就是一个关闭的上值。
+
++ 闭包捕获的是值还是变量？  
+    ```js
+    var globalSet;
+    var globalGet;
+
+    fun main() {
+        var a = "initial";
+
+        fun set() { a = "updated"; }
+        fun get() { print a; }
+
+        globalSet = set;
+        globalGet = get;
+    }
+
+    main();
+    globalSet();
+    globalGet();
+    ```
+    
+    是变量, 是这里的set能影响get
 
 ## Introduction
 

@@ -10,7 +10,7 @@
 #define STACK_MAX  (FRAMES_MAX * UINT8_COUNT)
 
 typedef struct {
-    ObjFunction* function;
+    ObjClosure* closure;
     uint8_t* ip;  // 返回地址
     Value* slots; // 虚拟机的栈中该函数可以使用的第一个slot槽
                   // 这里的指针的语义不是数组, 而是指针, 全局只有一个常量池,
