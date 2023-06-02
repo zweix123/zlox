@@ -15,6 +15,7 @@ VM vm;
 static void resetStack() {
     vm.stackTop = vm.stack;
     vm.frameCount = 0;
+    vm.openUpvalues = NULL;
 }
 
 static void runtimeError(const char* format, ...) {
@@ -105,8 +106,35 @@ static bool callValue(Value callee, int argCount) {
 }
 
 static ObjUpvalue* captureUpvalue(Value* local) {
+    // vm.openUpvalues是“最栈顶”的槽
+    ObjUpvalue* prevUpvalue = NULL;
+    ObjUpvalue* upvalue = vm.openUpvalues;
+    while (upvalue != NULL
+           && upvalue->location > local) { // 找到loca之上的最近的槽
+        prevUpvalue = upvalue;
+        upvalue = upvalue->next;
+    }
+    // 如果一样, 说明就是它了
+    if (upvalue != NULL && upvalue->location == local) { return upvalue; }
+    // 否则我们需要在upvalue(更低)和prevUpvalue(更高/更接近vm.openUpvalues)之间插入一个新的
     ObjUpvalue* createdUpvalue = newUpvalue(local);
+    createdUpvalue->next = upvalue;
+
+    if (prevUpvalue == NULL) {
+        vm.openUpvalues = createdUpvalue;
+    } else {
+        prevUpvalue->next = createdUpvalue;
+    }
     return createdUpvalue;
+}
+
+static void closeUpvalues(Value* last) { // 关闭指定栈槽以上的所有需要关闭的上值
+    while (vm.openUpvalues != NULL && vm.openUpvalues->location >= last) {
+        ObjUpvalue* upvalue = vm.openUpvalues;
+        upvalue->closed = *upvalue->location;
+        upvalue->location = &upvalue->closed;
+        vm.openUpvalues = upvalue->next;
+    }
 }
 
 static bool isFalsey(Value value) {
@@ -223,7 +251,7 @@ static InterpretResult run() {
                 break;
             }
             case OP_GET_UPVALUE: {
-                uint8_t slot = READ_BYTE();  // 参数是在上值列表中的索引
+                uint8_t slot = READ_BYTE(); // 参数是在上值列表中的索引
                 push(*frame->closure->upvalues[slot]->location);
                 break;
             }
@@ -294,8 +322,14 @@ static InterpretResult run() {
                 frame = &vm.frames[vm.frameCount - 1];
                 break;
             }
+            case OP_CLOSE_UPVALUE: {
+                closeUpvalues(vm.stackTop - 1);
+                pop();
+                break;
+            }
             case OP_RETURN: {
                 Value result = pop();
+                closeUpvalues(frame->slots);
                 vm.frameCount--;
                 if (vm.frameCount == 0) {
                     pop();

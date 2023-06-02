@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <time.h>
 #include <string.h>
 
@@ -19,6 +20,11 @@ static Value showNative(int argCount, Value* args) {
     return NUMBER_VAL(argCount);
 }
 
+static Value exitNative(int argCount, Value* args) {
+    exit(0);
+    return *args;
+}
+
 // ===
 
 void defineNative(const char* name, NativeFn function) {
@@ -32,4 +38,5 @@ void defineNative(const char* name, NativeFn function) {
 void nativeRegister() {
     defineNative("clock", clockNative);
     defineNative("show", showNative);
+    defineNative("exit", exitNative);
 }

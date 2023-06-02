@@ -60,7 +60,9 @@ struct ObjString {
 
 typedef struct ObjUpvalue {
     Obj obj;
-    Value* location;  // 底层实际Value
+    Value* location; // 指针(各个上值的底层Value离散在堆中)
+    Value closed;    // 指针指向的位置的Value
+    struct ObjUpvalue* next; //
 } ObjUpvalue;
 
 typedef struct {

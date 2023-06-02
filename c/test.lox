@@ -1,32 +1,56 @@
-// fun outer() {
-//   var x = "value";
-//   fun middle() {
-//     fun inner() {
-//       print x;
-//     }
-
-//     print "create inner closure";
-//     return inner;
+// fun sam() {
+//   var x = 1;
+//   fun sam2() {
+//     print x;
 //   }
-
-//   print "return from outer";
-//   return middle;
+//   return sam2;
 // }
-// var mid = outer();
-// var in = mid();
+// var t = sam();
+// t();
+
+fun outer() {
+  var x = "v";
+  fun middle() {
+
+    // fun inner() {
+    //   print x;
+    // }
+
+    // print "create inner closure";
+    // return inner;
+    
+  }
+
+  print "return from outer";
+  return middle;
+}
+var mid = outer();
+var in = mid();
 // in();
 // return from outer
 // create inner closure
 // value
 
-fun outer() {
-  var x = "outside";
-  fun inner() {
-    print x;
-  }
-  inner();
-}
-outer();
+// fun outer() {
+//   var x = "outside";
+//   fun inner() {
+//     print x;
+//   }
+
+//   return inner;
+// }
+
+// var closure = outer();
+// closure();
+
+// fun outer() {
+//   var x = "outside";
+//   fun inner() {
+//     print x;
+//   }
+//   inner();
+// }
+// outer();
 
 // fun outer() {
 //   var a = 1;

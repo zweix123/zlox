@@ -21,11 +21,12 @@ typedef struct {
     CallFrame
         frames[FRAMES_MAX]; // 调用栈, 每层栈都有独立的字节码、常量池和调用栈
     int frameCount;
-    Value stack[STACK_MAX]; // 运行时栈
-    Value* stackTop;        // 栈顶指针
-    Table globals;          // 全局变量
-    Table strings;          // 字符串驻留
-    Obj* objects;           // 不定内存(链表)
+    Value stack[STACK_MAX];   // 运行时栈
+    Value* stackTop;          // 栈顶指针
+    Table globals;            // 全局变量
+    Table strings;            // 字符串驻留
+    ObjUpvalue* openUpvalues; //
+    Obj* objects;             // 不定内存(链表)
 } VM;
 
 typedef enum {

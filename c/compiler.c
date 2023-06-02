@@ -43,6 +43,7 @@ typedef struct {
 typedef struct {
     Token name;
     int depth;
+    bool isCaptured; // 是否被底层代码块捕获成闭包中的值
 } Local;
 
 typedef struct {
@@ -90,6 +91,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     // 编译模拟栈的0索引由块自己使用
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
+    local->isCaptured = false;
     local->name.start = "";
     local->name.length = 0;
 }
@@ -237,7 +239,11 @@ static void endScope() {
     while (current->localCount > 0
            && current->locals[current->localCount - 1].depth
                   > current->scopeDepth) {
-        emitByte(OP_POP);
+        if (current->locals[current->localCount - 1].isCaptured) {
+            emitByte(OP_CLOSE_UPVALUE);
+        } else { // 如果没有被捕获, 就普通的弹出
+            emitByte(OP_POP);
+        }
         current->localCount--;
     }
 }
@@ -265,6 +271,7 @@ static void addLocal(Token name) {
     local->depth = -1; // 调用这个函数的是declareVariable,
                        // 当时只声明而未定义,
                        // 以flag -1标记
+    local->isCaptured = false;
 }
 
 static void declareVariable() {
@@ -368,7 +375,10 @@ static int resolveUpvalue(Compiler* compiler, Token* name) {
 
     int local =
         resolveLocal(compiler->enclosing, name); // 去上一层找它的局部变量
-    if (local != -1) { return addUpvalue(compiler, (uint8_t)local, true); }
+    if (local != -1) {
+        compiler->enclosing->locals[local].isCaptured = true;
+        return addUpvalue(compiler, (uint8_t)local, true);
+    }
 
     int upvalue = resolveUpvalue(compiler->enclosing, name); // 递归向上
     if (upvalue != -1) { return addUpvalue(compiler, (uint8_t)upvalue, false); }

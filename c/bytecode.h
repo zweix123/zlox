@@ -34,6 +34,7 @@ typedef enum {
     OP_JUMP_IF_FALSE, // 条件jump
     OP_CALL,          // 函数调用
     OP_LOOP,          //
+    OP_CLOSE_UPVALUE, // 对于函数中被其他闭包捕获的变量的处理
     OP_RETURN,        // return
 } OpCode;             // operation code
 
