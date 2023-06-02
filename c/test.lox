@@ -20,16 +20,25 @@
 // value
 
 fun outer() {
-  var a = 1;
-  var b = 2;
-  fun middle() {
-    var c = 3;
-    var d = 4;
-    fun inner() {
-      print a + c + b + d;
-    }
+  var x = "outside";
+  fun inner() {
+    print x;
   }
+  inner();
 }
+outer();
+
+// fun outer() {
+//   var a = 1;
+//   var b = 2;
+//   fun middle() {
+//     var c = 3;
+//     var d = 4;
+//     fun inner() {
+//       print a + c + b + d;
+//     }
+//   }
+// }
 
 // var a = !(5 - 4 > 3 * 2 == ! nil);
 // print show(a, true, nil, 42, "Hello World");

@@ -16,6 +16,7 @@
 #define AS_NATIVE(value)   (((ObjNative*)AS_OBJ(value))->function)
 #define AS_STRING(value)   ((ObjString*)AS_OBJ(value))
 #define AS_CLOSURE(value)  ((ObjClosure*)AS_OBJ(value))
+#define AS_UPVALUE(value)  ((ObjUpvalue*)AS_OBJ(value))
 
 // #define AS_CSTRING(value)  (((ObjString*)AS_OBJ(value))->chars)
 
@@ -24,6 +25,7 @@ typedef enum {
     OBJ_NATIVE,
     OBJ_STRING,
     OBJ_CLOSURE,
+    OBJ_UPVALUE,
 } ObjType;
 
 struct Obj {
@@ -56,9 +58,17 @@ struct ObjString {
     uint32_t hash;
 };
 
+typedef struct ObjUpvalue {
+    Obj obj;
+    Value* location;  // 底层实际Value
+} ObjUpvalue;
+
 typedef struct {
     Obj obj;
     ObjFunction* function; // 此时ObjFunction更像是对底层函数的封装
+    ObjUpvalue** upvalues; // ObjUpvalue* upvalues[], 因为上值存储在栈中,
+                           // 肯定用指针, 但是C不允许定义name[]
+    int upvalueCount;
 } ObjClosure;
 
 ObjFunction* newFunction();
@@ -68,6 +78,7 @@ ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 
 ObjClosure* newClosure(ObjFunction* function);
+ObjUpvalue* newUpvalue(Value* slot);
 
 void printObject(Value value);
 
