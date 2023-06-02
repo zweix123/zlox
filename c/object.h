@@ -34,9 +34,10 @@ struct Obj {
 
 typedef struct {
     Obj obj;
-    int arity;       // 参数数量
-    Chunk chunk;     // 函数逻辑字节码
-    ObjString* name; // 函数名称
+    int arity;        // 参数数量
+    int upvalueCount; // 当前逻辑块的上值数量
+    Chunk chunk;      // 函数逻辑字节码
+    ObjString* name;  // 函数名称
 } ObjFunction;
 
 typedef Value (*NativeFn)(int argCount, Value* args);

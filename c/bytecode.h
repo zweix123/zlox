@@ -16,8 +16,10 @@ typedef enum {
     OP_GET_GLOBAL, // op arg, 取出变量名的value放入栈中
     OP_SET_GLOBAL, // op arg, 将栈顶元素作为变量名在global中的value
     // 而局部变量直接存在栈中, 下面的arg是栈的地址
-    OP_GET_LOCAL, // op arg, 取出栈arg位置的值入栈
-    OP_SET_LOCAL, // op_arg, 直接修改arg位置的值
+    OP_GET_LOCAL,   // op arg, 取出栈arg位置的值入栈
+    OP_SET_LOCAL,   // op_arg, 直接修改arg位置的值
+    OP_GET_UPVALUE, // 同上, 参数为upvalue在上值列表的索引
+    OP_SET_UPVALUE,
     OP_EQUAL, // equal: 取出栈顶两个元素进行比较, 并将结构压入栈中
     OP_GREATER,       // greater >:
     OP_LESS,          // less <:
