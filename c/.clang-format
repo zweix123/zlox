@@ -70,7 +70,6 @@ IndentExternBlock: Indent # extern块 要缩进
 IndentGotoLabels: true # labal 要 缩进
 IndentPPDirectives: None # 对于宏, 不会因为分支而缩进
 IndentWrappedFunctionNames: false # 对于长类型的换行, 不缩进
-; InsertNewlineAtEOF: true # 在文件末尾插入空行
 # InsertTrailingCommas: Wrapped  # 多参数末尾添加逗号，但无效
 
 KeepEmptyLinesAtTheStartOfBlocks: false # 不要 每个块内容的第一行是空行
@@ -89,7 +88,7 @@ ReflowComments: true # 整理注释
 IndentRequires: true # requires字句缩进相关
 
 SeparateDefinitionBlocks: Always # 块间要有空行 -
-SeparateDefinitionStyle: Always #  同上       ?
+
 
 ShortNamespaceLines: 5 # 不懂
 
@@ -118,5 +117,4 @@ SpacesInContainerLiterals: true # 初始化有空格
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 
-EmptyLineBeforeFunctions: All # manual无
 ---

@@ -110,7 +110,7 @@ static ObjUpvalue* captureUpvalue(Value* local) {
     ObjUpvalue* prevUpvalue = NULL;
     ObjUpvalue* upvalue = vm.openUpvalues;
     while (upvalue != NULL
-           && upvalue->location > local) { // 找到loca之上的最近的槽
+           && upvalue->location > local) { // 找到local之上的最近的槽
         prevUpvalue = upvalue;
         upvalue = upvalue->next;
     }
@@ -201,7 +201,7 @@ static InterpretResult run() {
                 for (int i = 0; i < closure->upvalueCount; i++) {
                     uint8_t isLocal = READ_BYTE();
                     uint8_t index = READ_BYTE();
-                    if (isLocal) {                 // 在相邻外层
+                    if (isLocal) { // 在相邻外层
                         closure->upvalues[i] = captureUpvalue(
                             frame->slots + index); // index是栈相对索引嘛,
                                                    // slots就是当前的栈指针

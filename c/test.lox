@@ -1,16 +1,14 @@
-// fun sam() {
-//   var x = 1;
-//   fun sam2() {
-//     print x;
-//   }
-//   return sam2;
-// }
-// var t = sam();
-// t();
-
 fun outer() {
-  var x = "v";
-  fun middle() {
+  var x = "outside";
+  fun inner() {
+    print x;
+  }
+  inner();
+}
+outer();
+// fun outer() {
+//   var x = "v";
+//   fun middle() {
 
     // fun inner() {
     //   print x;
@@ -19,13 +17,13 @@ fun outer() {
     // print "create inner closure";
     // return inner;
     
-  }
+//   }
 
-  print "return from outer";
-  return middle;
-}
-var mid = outer();
-var in = mid();
+//   print "return from outer";
+//   return middle;
+// }
+// var mid = outer();
+// var in = mid();
 // in();
 // return from outer
 // create inner closure

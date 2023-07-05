@@ -14,7 +14,7 @@ DEPS := $(patsubst %.c,$(BUILD)/%.d,$(SRCS))
 OBJS := $(patsubst %.c,$(BUILD)/%.o,$(SRCS))
 EXEC = main.exe
 
-.PHONY: all clean test gdb
+.PHONY: all clean run test gdb
 
 all: $(EXEC)
 
@@ -28,6 +28,9 @@ $(BUILD)/%.o: %.c
 
 $(BUILD)/%.d: %.c
 	$(CC) $(CFLAGS) -MM $< -MT "$(BUILD)/$*.o" -MF $@ 
+
+run: $(EXEC)
+	./$(EXEC)
 
 clean:
 	rm $(BUILD)/*.d

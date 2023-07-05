@@ -20,7 +20,7 @@ typedef struct {
 
 void initTable(Table* table);
 void freeTable(Table* table);
-void copyTable(Table* from, Table* to);                    // copy
+void copyTable(Table* from, Table* to); // copy
 
 bool tableGet(Table* table, ObjString* key, Value* value); // 返回值通过value
 bool tableSet(Table* table, ObjString* key, Value value);
