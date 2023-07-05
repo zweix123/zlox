@@ -98,6 +98,11 @@ static bool call(ObjClosure* closure, int argCount) {
 static bool callValue(Value callee, int argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
+            case OBJ_CLASS: {
+                ObjClass* zlass = AS_CLASS(callee);
+                vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(zlass));
+                return true;
+            }
             case OBJ_CLOSURE: return call(AS_CLOSURE(callee), argCount);
             case OBJ_NATIVE: {
                 NativeFn native = AS_NATIVE(callee);
@@ -211,7 +216,7 @@ static InterpretResult run() {
                 for (int i = 0; i < closure->upvalueCount; i++) {
                     uint8_t isLocal = READ_BYTE();
                     uint8_t index = READ_BYTE();
-                    if (isLocal) { // 在相邻外层
+                    if (isLocal) {                 // 在相邻外层
                         closure->upvalues[i] = captureUpvalue(
                             frame->slots + index); // index是栈相对索引嘛,
                                                    // slots就是当前的栈指针
@@ -351,6 +356,7 @@ static InterpretResult run() {
                 frame = &vm.frames[vm.frameCount - 1];
                 break;
             }
+            case OP_CLASS: push(OBJ_VAL(newClass(READ_STRING()))); break;
         }
     }
 #undef READ_BYTE

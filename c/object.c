@@ -103,6 +103,19 @@ ObjUpvalue* newUpvalue(Value* slot) {
     return upvalue;
 }
 
+ObjClass* newClass(ObjString* name) {
+    ObjClass* zlass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
+    zlass->name = name;
+    return zlass;
+}
+
+ObjInstance* newInstance(ObjClass* klass) {
+    ObjInstance* instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
+    instance->klass = klass;
+    initTable(&instance->fields);
+    return instance;
+}
+
 // ===
 
 void printFunction(ObjFunction* function) {
@@ -129,6 +142,14 @@ void printObjUpvalue(void*) {
     printf("upvalue");
 }
 
+void printObjClass(ObjClass* zlass) {
+    printf("%s", zlass->name->chars);
+}
+
+void printObjInstance(ObjInstance* instance) {
+    printf("%s instance", instance->klass->name->chars);
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_FUNCTION: printFunction(AS_FUNCTION(value)); break;
@@ -136,6 +157,8 @@ void printObject(Value value) {
         case OBJ_STRING: printObjString(AS_STRING(value)); break;
         case OBJ_CLOSURE: printObjClosure(AS_CLOSURE(value)); break;
         case OBJ_UPVALUE: printObjUpvalue(AS_CLOSURE(value)); break;
+        case OBJ_CLASS: printObjClass(AS_CLASS(value)); break;
+        case OBJ_INSTANCE: printObjInstance(AS_INSTANCE(value)); break;
         default: break;
     }
 }
