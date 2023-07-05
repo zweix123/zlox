@@ -30,6 +30,7 @@ typedef enum {
 
 struct Obj {
     ObjType type;
+    bool isMarked;
     struct Obj* next; // intrusive list侵入式列表,
                       // 用来保证虚拟机可以找到每个堆内存的对象
 };

@@ -2,6 +2,7 @@
 
 #include "chunk.h"
 #include "memory.h"
+#include "vm.h"
 
 void initChunk(Chunk* chunk) {
     chunk->count = 0;
@@ -34,6 +35,11 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
 }
 
 int addConstant(Chunk* Chunk, Value value) {
+    // 这里, 这个Value可能是在整个obj链上的, 但是此时它在C栈上,
+    // 即Lox中它是一个孤岛, 而下面有vector的add, 可能触发gc,
+    // 此时gc会清楚这个Value, 所有这里将其放到虚拟机栈上使之被引用不会被清除.
+    push(value);
     writeValueArray(&Chunk->constants, value);
+    pop();
     return Chunk->constants.count - 1;
 }

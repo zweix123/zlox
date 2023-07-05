@@ -27,6 +27,14 @@ typedef struct {
     Table strings;            // 字符串驻留
     ObjUpvalue* openUpvalues; //
     Obj* objects;             // 不定内存(链表)
+
+    // 维护(三色标记)中的灰色的栈
+    int grayCount;
+    int grayCapacity;
+    Obj** grayStack;
+
+    size_t bytesAllocated; // 虚拟机已分配的托管内存实时字节总数
+    size_t nextGC;         // 触发下一次回收的阈值
 } VM;
 
 typedef enum {
