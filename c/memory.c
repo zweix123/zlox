@@ -65,6 +65,8 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_CLASS: {
+            ObjClass* zlass = (ObjClass*)object;
+            freeTable(&zlass->methods);
             FREE(ObjClass, object);
             break;
         }
@@ -74,6 +76,7 @@ static void freeObject(Obj* object) {
             FREE(ObjInstance, object);
             break;
         }
+        case OBJ_BOUND_METHOD: FREE(ObjBoundMethod, object); break;
         default: break;
     }
 }
@@ -145,13 +148,19 @@ static void blackenObject(Obj* object) {
         case OBJ_CLASS: {
             ObjClass* zlass = (ObjClass*)object;
             markObject((Obj*)zlass->name);
+            markTable(&zlass->methods);
             break;
         }
-
         case OBJ_INSTANCE: {
             ObjInstance* instance = (ObjInstance*)object;
             markObject((Obj*)instance->klass);
             markTable(&instance->fields);
+            break;
+        }
+        case OBJ_BOUND_METHOD: {
+            ObjBoundMethod* bound = (ObjBoundMethod*)object;
+            markValue(bound->receiver);
+            markObject((Obj*)bound->method);
             break;
         }
         case OBJ_NATIVE:

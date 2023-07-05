@@ -106,6 +106,7 @@ ObjUpvalue* newUpvalue(Value* slot) {
 ObjClass* newClass(ObjString* name) {
     ObjClass* zlass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     zlass->name = name;
+    initTable(&zlass->methods);
     return zlass;
 }
 
@@ -114,6 +115,13 @@ ObjInstance* newInstance(ObjClass* klass) {
     instance->klass = klass;
     initTable(&instance->fields);
     return instance;
+}
+
+ObjBoundMethod* newBoundMethod(Value receiver, ObjClosure* method) {
+    ObjBoundMethod* bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
+    bound->receiver = receiver;
+    bound->method = method;
+    return bound;
 }
 
 // ===
@@ -159,6 +167,9 @@ void printObject(Value value) {
         case OBJ_UPVALUE: printObjUpvalue(AS_CLOSURE(value)); break;
         case OBJ_CLASS: printObjClass(AS_CLASS(value)); break;
         case OBJ_INSTANCE: printObjInstance(AS_INSTANCE(value)); break;
+        case OBJ_BOUND_METHOD:
+            printFunction(AS_BOUND_METHOD(value)->method->function);
+            break;
         default: break;
     }
 }
