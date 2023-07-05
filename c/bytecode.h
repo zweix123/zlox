@@ -37,12 +37,14 @@ typedef enum {
     OP_CLOSE_UPVALUE, // 对于函数中被其他闭包捕获的变量的处理
     OP_RETURN,        // return
     OP_CLASS,
-    OP_GET_PROPERTY, // class get
-    OP_SET_PROPERTY, // class set
+    OP_GET_PROPERTY,  // class get
+    OP_SET_PROPERTY,  // class set
     OP_METHOD,
-    OP_INVOKE, // 针对直接调用方法, 需要两个参数,
+    OP_INVOKE,        // 针对直接调用方法, 两个参数,
                // 属性名在常量表的索引和传递给方法的参数数量
-} OpCode; // operation code
+    OP_INHERIT,   // 继承
+    OP_GET_SUPER, // 超类访问
+} OpCode;         // operation code
 
 // 并没有<=、>=、!=
 //  因为 !(a < b) -> (a >= b)
