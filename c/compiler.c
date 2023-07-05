@@ -54,6 +54,7 @@ typedef struct {
 
 typedef enum {
     TYPE_FUNCTION, // type_function
+    TYPE_METHOD,   // type_method
     TYPE_SCRIPT    // type_script
 } FunctionType;
 
@@ -67,9 +68,14 @@ typedef struct Compiler {
     int scopeDepth;
 } Compiler;
 
+typedef struct ClassCompiler {
+    struct ClassCompiler* enclosing;
+} ClassCompiler;
+
 Parser parser;
 // 下面两个指针的作用是, 通过全局变量避免修改每个函数的接口
 Compiler* current = NULL;
+ClassCompiler* currentClass = NULL;
 Chunk* compilingChunk;
 
 static Chunk* currentChunk() {
@@ -95,6 +101,14 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     local->isCaptured = false;
     local->name.start = "";
     local->name.length = 0;
+
+    if (type != TYPE_FUNCTION) {
+        local->name.start = "this";
+        local->name.length = 4;
+    } else {
+        local->name.start = "";
+        local->name.length = 0;
+    }
 }
 
 // ===
@@ -426,6 +440,14 @@ static void variable(bool canAssign) {
     namedVariable(parser.previous, canAssign);
 }
 
+static void this_(bool canAssign) {
+    if (currentClass == NULL) {
+        error("Can't use 'this' outside of a class.");
+        return;
+    }
+    variable(false);
+}
+
 static void number(bool canAssign) {
     double value = strtod(parser.previous.start, NULL);
     emitConstant(NUMBER_VAL(value));
@@ -545,7 +567,7 @@ ParseRule rules[] = {
     [TOKEN_PRINT] = {NULL, NULL, PREC_NONE},                 // print
     [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},                // return
     [TOKEN_SUPER] = {NULL, NULL, PREC_NONE},                 // super
-    [TOKEN_THIS] = {NULL, NULL, PREC_NONE},                  // this
+    [TOKEN_THIS] = {this_, NULL, PREC_NONE},                 // this
     [TOKEN_TRUE] = {literal, NULL, PREC_NONE},               // true
     [TOKEN_VAR] = {NULL, NULL, PREC_NONE},                   // var
     [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},                 // while
@@ -630,7 +652,7 @@ static void function(FunctionType type) {
 static void method() {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifierConstant(&parser.previous);
-    FunctionType type = TYPE_FUNCTION;
+    FunctionType type = TYPE_METHOD;
     function(type);
     emitBytes(OP_METHOD, constant);
 }
@@ -645,6 +667,10 @@ static void classDeclaration() {
     emitBytes(OP_CLASS, nameConstant);
     defineVariable(nameConstant);
 
+    ClassCompiler classCompiler;
+    classCompiler.enclosing = currentClass;
+    currentClass = &classCompiler;
+
     namedVariable(className, false);
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 
@@ -652,6 +678,8 @@ static void classDeclaration() {
 
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
     emitByte(OP_POP);
+
+    currentClass = currentClass->enclosing;
 }
 
 static void funDeclaration() {
