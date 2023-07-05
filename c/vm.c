@@ -137,6 +137,35 @@ static bool callValue(Value callee, int argCount) {
     return false;
 }
 
+static bool invokeFromClass(ObjClass* zlass, ObjString* name, int argCount) {
+    Value method;
+    if (!tableGet(&zlass->methods, name, &method)) {
+        runtimeError("Undefined property '%s'.", name->chars);
+        return false;
+    }
+    return call(AS_CLOSURE(method), argCount);
+}
+
+static bool invoke(ObjString* name, int argCount) {
+    Value receiver = peek(argCount);
+    if (!IS_INSTANCE(receiver)) {
+        runtimeError("Only instances have methods.");
+        return false;
+    }
+    ObjInstance* instance = AS_INSTANCE(receiver);
+
+    Value value;
+    if (tableGet(&instance->fields, name, &value)) {
+        // 为什么要这样做, 因为这样的情况, 可以把方法赋值给另一个字段,
+        // 此时用户会像调用一个方法一样使用它, 但是这个不是一个方法调用,
+        // 而是一个字段访问
+        vm.stackTop[-argCount - 1] = value;
+        return callValue(value, argCount);
+    }
+
+    return invokeFromClass(instance->klass, name, argCount);
+}
+
 static bool bindMethod(ObjClass* klass, ObjString* name) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
@@ -431,6 +460,15 @@ static InterpretResult run() {
                 break;
             }
             case OP_METHOD: defineMethod(READ_STRING()); break;
+            case OP_INVOKE: {
+                ObjString* method = READ_STRING();
+                int argCount = READ_BYTE();
+                if (!invoke(method, argCount)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
         }
     }
 #undef READ_BYTE

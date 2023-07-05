@@ -40,6 +40,8 @@ typedef enum {
     OP_GET_PROPERTY, // class get
     OP_SET_PROPERTY, // class set
     OP_METHOD,
+    OP_INVOKE, // 针对直接调用方法, 需要两个参数,
+               // 属性名在常量表的索引和传递给方法的参数数量
 } OpCode; // operation code
 
 // 并没有<=、>=、!=
