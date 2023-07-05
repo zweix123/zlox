@@ -181,6 +181,7 @@ static void markRoots() {
         markObject((Obj*)upvalue);
     }
     markCompilerRoots();
+    markObject((Obj*)vm.initString);
 }
 
 static void traceReferences() {

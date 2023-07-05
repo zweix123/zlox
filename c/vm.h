@@ -25,6 +25,7 @@ typedef struct {
     Value* stackTop;          // 栈顶指针
     Table globals;            // 全局变量
     Table strings;            // 字符串驻留
+    ObjString* initString;    // 即字符串"init"
     ObjUpvalue* openUpvalues; //
     Obj* objects;             // 不定内存(链表)
 

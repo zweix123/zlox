@@ -54,12 +54,19 @@ void initVM() {
     initTable(&vm.globals);
     initTable(&vm.strings);
 
+    // 为什么先初始化为null再赋值呢? 因为copyString可能触发GC
+    // 一旦触发GC且这个变量没有初始化, 此时对其的GC是UB(它还没有初始化,
+    // 它可能指向任何地方)
+    vm.initString = NULL;
+    vm.initString = copyString("init", 4);
+
     nativeRegister();
 }
 
 void freeVM() {
     freeTable(&vm.globals);
     freeTable(&vm.strings);
+    vm.initString = NULL; // 不需要释放, 由GC管理
     freeObjects();
 }
 
@@ -106,6 +113,13 @@ static bool callValue(Value callee, int argCount) {
             case OBJ_CLASS: {
                 ObjClass* zlass = AS_CLASS(callee);
                 vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(zlass));
+                Value initializer;
+                if (tableGet(&zlass->methods, vm.initString, &initializer)) {
+                    return call(AS_CLOSURE(initializer), argCount);
+                } else if (argCount != 0) {
+                    runtimeError("Expected 0 arguments but got %d.", argCount);
+                    return false;
+                }
                 return true;
             }
             case OBJ_CLOSURE: return call(AS_CLOSURE(callee), argCount);
@@ -241,7 +255,7 @@ static InterpretResult run() {
                 for (int i = 0; i < closure->upvalueCount; i++) {
                     uint8_t isLocal = READ_BYTE();
                     uint8_t index = READ_BYTE();
-                    if (isLocal) {                 // 在相邻外层
+                    if (isLocal) { // 在相邻外层
                         closure->upvalues[i] = captureUpvalue(
                             frame->slots + index); // index是栈相对索引嘛,
                                                    // slots就是当前的栈指针
