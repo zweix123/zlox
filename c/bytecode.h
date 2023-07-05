@@ -37,7 +37,9 @@ typedef enum {
     OP_CLOSE_UPVALUE, // 对于函数中被其他闭包捕获的变量的处理
     OP_RETURN,        // return
     OP_CLASS,
-} OpCode;             // operation code
+    OP_GET_PROPERTY, // class get
+    OP_SET_PROPERTY, // class set
+} OpCode;            // operation code
 
 // 并没有<=、>=、!=
 //  因为 !(a < b) -> (a >= b)

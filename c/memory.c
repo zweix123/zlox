@@ -147,13 +147,13 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)zlass->name);
             break;
         }
-        
-         case OBJ_INSTANCE: {
-      ObjInstance* instance = (ObjInstance*)object;
-      markObject((Obj*)instance->klass);
-      markTable(&instance->fields);
-      break;
-    }
+
+        case OBJ_INSTANCE: {
+            ObjInstance* instance = (ObjInstance*)object;
+            markObject((Obj*)instance->klass);
+            markTable(&instance->fields);
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_STRING: break;
     }

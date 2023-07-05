@@ -216,7 +216,7 @@ static InterpretResult run() {
                 for (int i = 0; i < closure->upvalueCount; i++) {
                     uint8_t isLocal = READ_BYTE();
                     uint8_t index = READ_BYTE();
-                    if (isLocal) {                 // 在相邻外层
+                    if (isLocal) { // 在相邻外层
                         closure->upvalues[i] = captureUpvalue(
                             frame->slots + index); // index是栈相对索引嘛,
                                                    // slots就是当前的栈指针
@@ -357,6 +357,36 @@ static InterpretResult run() {
                 break;
             }
             case OP_CLASS: push(OBJ_VAL(newClass(READ_STRING()))); break;
+            case OP_GET_PROPERTY: {
+                if (!IS_INSTANCE(peek(0))) { // check, avoid get any name
+                    runtimeError("Only instances have properties.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                ObjInstance* instance = AS_INSTANCE(peek(0));
+                ObjString* name = READ_STRING();
+
+                Value value;
+                if (tableGet(&instance->fields, name, &value)) {
+                    pop(); // Instance.
+                    push(value);
+                    break;
+                }
+                runtimeError("Undefined property '%s'.", name->chars);
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            case OP_SET_PROPERTY: {
+                if (!IS_INSTANCE(peek(1))) { // 同上
+                    runtimeError("Only instances have fields.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                ObjInstance* instance = AS_INSTANCE(peek(1));
+                tableSet(&instance->fields, READ_STRING(), peek(0));
+                Value value = pop();
+                pop();
+                push(value);
+                break;
+            }
         }
     }
 #undef READ_BYTE

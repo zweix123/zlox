@@ -337,6 +337,18 @@ static void call(bool canAssign) {
     emitBytes(OP_CALL, argCount);
 }
 
+static void dot(bool canAssign) {
+    consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
+    uint8_t name = identifierConstant(&parser.previous);
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitBytes(OP_SET_PROPERTY, name);
+    } else {
+        emitBytes(OP_GET_PROPERTY, name);
+    }
+}
+
 static int resolveLocal(Compiler* compiler, Token* name) {
     for (int i = compiler->localCount - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
@@ -504,7 +516,7 @@ ParseRule rules[] = {
     [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},            // left_brace
     [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},           // right_brace
     [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},                 // comma
-    [TOKEN_DOT] = {NULL, NULL, PREC_NONE},                   // dot
+    [TOKEN_DOT] = {NULL, dot, PREC_CALL},                    // dot
     [TOKEN_MINUS] = {unary, binary, PREC_TERM},              // minus
     [TOKEN_PLUS] = {NULL, binary, PREC_TERM},                // plus
     [TOKEN_SEMICOLON] = {NULL, NULL, PREC_NONE},             // semicolon

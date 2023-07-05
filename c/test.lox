@@ -1,6 +1,13 @@
-class myClass{}
-print myClass;
-print myClass();
+class Pair {}
+
+var pair = Pair();
+pair.first = 1;
+pair.second = 2;
+print pair.first + pair.second; // 3.
+
+// class myClass{}
+// print myClass;
+// print myClass();
 
 // fun outer() {
 //   var x = "outside";
